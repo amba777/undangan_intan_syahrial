@@ -23,8 +23,6 @@ if "wishes" not in st.session_state:
     st.session_state.wishes = [
         {"name": "Keluarga Besar", "text": "Semoga menjadi keluarga yang Sakinah, Mawaddah, Warahmah. Aamiin Ya Rabbal Alamin.", "time": "Baru saja"}
     ]
-if "rsvp_sent" not in st.session_state:
-    st.session_state.rsvp_sent = False
 
 # ══════════════════════════════════════════════════════════════
 #  GLOBAL STYLES + SAKURA + MUSIK
@@ -33,7 +31,7 @@ st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+* { margin:0; padding:0; box-sizing:border-box; }
 
 [data-testid="stAppViewContainer"] {
     background: #0d0208 !important;
@@ -42,9 +40,9 @@ st.markdown("""
         radial-gradient(ellipse at 85% 5%, rgba(255,182,193,0.05) 0%, transparent 40%),
         radial-gradient(ellipse at 50% 100%, rgba(139,28,46,0.12) 0%, transparent 50%) !important;
 }
-[data-testid="stHeader"]  { background: transparent !important; }
+[data-testid="stHeader"] { background: transparent !important; }
 [data-testid="stToolbar"] { display: none !important; }
-.stDeployButton           { display: none !important; }
+.stDeployButton { display: none !important; }
 section[data-testid="stSidebar"] { display: none !important; }
 #MainMenu, footer, header { visibility: hidden !important; }
 
@@ -59,13 +57,79 @@ body, .stMarkdown, p, div {
     color: #f5e6d3 !important;
 }
 
-/* ── SAKURA CANVAS (fixed behind everything) ── */
+/* ── SAKURA CANVAS ── */
 #sakura-canvas {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none;
     z-index: 0;
+}
+
+/* ── OVERLAY ── */
+#overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,2,6,0.92);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    cursor: pointer;
+    transition: opacity 0.6s ease;
+}
+#overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+#overlay-box {
+    border: 1px solid rgba(201,168,76,0.5);
+    padding: 36px 48px;
+    text-align: center;
+    background: rgba(13,2,8,0.8);
+    max-width: 340px;
+    pointer-events: auto;
+    cursor: pointer;
+}
+#overlay-box:hover {
+    border-color: rgba(201,168,76,0.8);
+}
+.overlay-title {
+    font-family: 'Great Vibes', cursive;
+    font-size: 28px;
+    color: #c9a84c;
+    margin: 8px 0;
+}
+.overlay-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    color: #c9a84c;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 24px;
+}
+.overlay-btn {
+    border: 1px solid #c9a84c;
+    padding: 12px 28px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c9a84c;
+    margin-bottom: 12px;
+    transition: all 0.3s;
+    display: inline-block;
+}
+.overlay-btn:hover {
+    background: rgba(201,168,76,0.15);
+}
+.overlay-music {
+    font-size: 10px;
+    color: #c9a84c;
+    opacity: 0.45;
+    letter-spacing: 1px;
 }
 
 /* ── MUSIC BUTTON ── */
@@ -81,8 +145,9 @@ body, .stMarkdown, p, div {
     cursor: pointer;
     z-index: 9999;
     display: none;
-    align-items: center; justify-content: center;
-    box-shadow: 0 0 24px rgba(201,168,76,0.3), 0 0 8px rgba(255,160,180,0.15);
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 24px rgba(201,168,76,0.3);
     transition: all 0.3s;
 }
 #music-btn:hover { background: rgba(201,168,76,0.15); transform: scale(1.1); }
@@ -104,25 +169,6 @@ body, .stMarkdown, p, div {
 }
 #music-tooltip.show { opacity: 1; }
 
-/* ── OVERLAY ── */
-#music-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(10,2,6,0.88);
-    backdrop-filter: blur(6px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 99999;
-    cursor: pointer;
-}
-#music-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.6s ease;
-}
-
 /* ── HERO ── */
 .hero-wrap {
     text-align: center;
@@ -142,10 +188,7 @@ body, .stMarkdown, p, div {
     opacity: 0.75;
     font-style: italic;
     letter-spacing: 1.5px;
-    margin-bottom: 0;
 }
-
-/* sakura branch decorative top */
 .sakura-branch {
     text-align: center;
     font-size: 40px;
@@ -171,26 +214,25 @@ body, .stMarkdown, p, div {
 .frame-corner {
     position: absolute;
     width: 24px; height: 24px;
-    border-color: #c9a84c; border-style: solid;
+    border-color: #c9a84c;
+    border-style: solid;
 }
-.fc-tl { top:-4px;  left:-4px;  border-width:2px 0 0 2px; }
-.fc-tr { top:-4px;  right:-4px; border-width:2px 2px 0 0; }
-.fc-bl { bottom:-4px; left:-4px;  border-width:0 0 2px 2px; }
+.fc-tl { top:-4px; left:-4px; border-width:2px 0 0 2px; }
+.fc-tr { top:-4px; right:-4px; border-width:2px 2px 0 0; }
+.fc-bl { bottom:-4px; left:-4px; border-width:0 0 2px 2px; }
 .fc-br { bottom:-4px; right:-4px; border-width:0 2px 2px 0; }
-
-/* sakura petal overlay on frame corners */
 .frame-petal {
     position: absolute;
     font-size: 18px;
     filter: drop-shadow(0 0 4px rgba(255,160,180,0.5));
     pointer-events: none;
 }
-.fp-tl { top:-14px;  left:-14px;  transform:rotate(-30deg); }
-.fp-tr { top:-14px;  right:-14px; transform:rotate(30deg); }
-.fp-bl { bottom:-14px; left:-14px;  transform:rotate(-150deg); }
+.fp-tl { top:-14px; left:-14px; transform:rotate(-30deg); }
+.fp-tr { top:-14px; right:-14px; transform:rotate(30deg); }
+.fp-bl { bottom:-14px; left:-14px; transform:rotate(-150deg); }
 .fp-br { bottom:-14px; right:-14px; transform:rotate(150deg); }
 
-/* ── GALLERY ROW ── */
+/* ── GALLERY ── */
 .gallery-row {
     display: flex; gap: 8px;
     justify-content: center;
@@ -227,7 +269,7 @@ body, .stMarkdown, p, div {
     opacity:0.45; margin-top:12px; text-transform:uppercase;
 }
 
-/* ── GOLD DIVIDER with petals ── */
+/* ── GOLD DIVIDER ── */
 .gold-divider {
     display:flex; align-items:center; gap:10px;
     margin:22px auto; max-width:320px; padding:0 24px;
@@ -243,7 +285,6 @@ body, .stMarkdown, p, div {
     padding:28px 24px;
     position:relative;
     background:rgba(139,28,46,0.04);
-    backdrop-filter:blur(2px);
 }
 .s-card-top::before {
     content:''; position:absolute;
@@ -264,7 +305,7 @@ body, .stMarkdown, p, div {
 /* ── MEMPELAI ── */
 .mempelai-name {
     font-family:'Great Vibes',cursive !important;
-    font-size:42px !important; color:#c9a84c !important;
+    font-size:38px !important; color:#c9a84c !important;
     text-align:center; display:block; line-height:1.15;
     text-shadow:0 0 24px rgba(201,168,76,0.2);
 }
@@ -284,10 +325,10 @@ body, .stMarkdown, p, div {
     font-size:14px; opacity:0.25;
 }
 .ev-type { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:#c9a84c; margin-bottom:10px; }
-.ev-day  { font-family:'Playfair Display',serif !important; font-size:44px !important; font-weight:700 !important; color:#c9a84c !important; line-height:1; }
+.ev-day { font-family:'Playfair Display',serif !important; font-size:44px !important; font-weight:700 !important; color:#c9a84c !important; line-height:1; }
 .ev-monthyear { font-size:10px; letter-spacing:2px; color:#c9a84c; opacity:0.65; text-transform:uppercase; margin:4px 0 10px; }
 .ev-time { font-size:12px; color:#e8d5c0; opacity:0.75; margin-bottom:8px; }
-.ev-loc  { font-size:11px; color:#c9a84c; opacity:0.6; line-height:1.6; font-style:italic; }
+.ev-loc { font-size:11px; color:#c9a84c; opacity:0.6; line-height:1.6; font-style:italic; }
 
 /* ── COUNTDOWN ── */
 .countdown-wrap {
@@ -307,16 +348,15 @@ body, .stMarkdown, p, div {
     font-family:'Playfair Display',serif !important;
     font-size:40px !important; font-weight:700 !important; color:#c9a84c !important;
     display:block; line-height:1;
-    text-shadow:0 0 24px rgba(201,168,76,0.35), 0 0 60px rgba(255,160,180,0.1);
+    text-shadow:0 0 24px rgba(201,168,76,0.35);
 }
 .cd-unit { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c9a84c; opacity:0.5; margin-top:5px; }
-.cd-sep  { font-family:'Playfair Display',serif; font-size:32px; color:#c9a84c; opacity:0.35; align-self:flex-start; padding-top:6px; line-height:1; }
+.cd-sep { font-family:'Playfair Display',serif; font-size:32px; color:#c9a84c; opacity:0.35; align-self:flex-start; padding-top:6px; line-height:1; }
 
 /* ── LOCATION ── */
 .khit-card { margin:0 20px 20px; border:1px solid rgba(201,168,76,0.22); padding:24px; text-align:center; background:rgba(255,182,193,0.02); }
-.khit-also  { font-size:9px; letter-spacing:4px; color:#c9a84c; opacity:0.5; text-transform:uppercase; margin-bottom:8px; }
+.khit-also { font-size:9px; letter-spacing:4px; color:#c9a84c; opacity:0.5; text-transform:uppercase; margin-bottom:8px; }
 .khit-title { font-family:'Great Vibes',cursive !important; font-size:36px !important; color:#c9a84c !important; margin-bottom:4px; }
-.khit-name  { font-family:'Playfair Display',serif !important; font-size:20px !important; color:#f5e6d3 !important; letter-spacing:1px; }
 
 /* ── WISH ── */
 .wish-item { padding:12px 0; border-bottom:1px solid rgba(201,168,76,0.08); }
@@ -327,8 +367,8 @@ body, .stMarkdown, p, div {
 /* ── FOOTER ── */
 .footer-wrap { text-align:center; padding:32px 24px 56px; border-top:1px solid rgba(201,168,76,0.1); }
 .footer-names { font-family:'Great Vibes',cursive !important; font-size:34px !important; color:#c9a84c !important; margin-bottom:8px; }
-.footer-sub   { font-size:10px; letter-spacing:3px; color:#c9a84c; opacity:0.4; text-transform:uppercase; margin-bottom:12px; }
-.wassalam     { font-size:11px; color:#c9a84c; opacity:0.3; font-style:italic; }
+.footer-sub { font-size:10px; letter-spacing:3px; color:#c9a84c; opacity:0.4; text-transform:uppercase; margin-bottom:12px; }
+.wassalam { font-size:11px; color:#c9a84c; opacity:0.3; font-style:italic; }
 
 /* ── STREAMLIT OVERRIDES ── */
 hr { border-color:rgba(201,168,76,0.1) !important; }
@@ -340,13 +380,13 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
 }
 .stButton > button:hover { background:rgba(201,168,76,0.12) !important; border-color:#c9a84c !important; }
 .stTextInput > div > div > input,
-.stTextArea  > div > div > textarea {
+.stTextArea > div > div > textarea {
     background:rgba(255,255,255,0.03) !important; border:1px solid rgba(201,168,76,0.25) !important;
     border-radius:0 !important; color:#f5e6d3 !important;
     font-family:'Cormorant Garamond',serif !important; font-size:14px !important;
 }
 .stTextInput > div > div > input:focus,
-.stTextArea  > div > div > textarea:focus { border-color:#c9a84c !important; box-shadow:none !important; }
+.stTextArea > div > div > textarea:focus { border-color:#c9a84c !important; box-shadow:none !important; }
 .stTextInput label, .stTextArea label, .stRadio label {
     color:#c9a84c !important; font-family:'Cormorant Garamond',serif !important;
     font-size:11px !important; letter-spacing:2px !important; text-transform:uppercase !important; opacity:0.7 !important;
@@ -359,53 +399,33 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
 .stSuccess, .stInfo { background:rgba(139,28,46,0.2) !important; border:1px solid rgba(201,168,76,0.3) !important; border-radius:0 !important; color:#c9a84c !important; }
 </style>
 
-<!-- ══ SAKURA CANVAS (fixed, behind all) ══ -->
+<!-- ══ SAKURA CANVAS ══ -->
 <canvas id="sakura-canvas"></canvas>
 
-<!-- ══ MUSIC WELCOME OVERLAY ══ -->
-<div id="music-overlay">
-    <div style="
-        border:1px solid rgba(201,168,76,0.5);
-        padding:36px 48px;text-align:center;
-        background:rgba(13,2,8,0.7);
-        max-width:320px;
-        pointer-events: auto;
-    ">
+<!-- ══ OVERLAY ══ -->
+<div id="overlay">
+    <div id="overlay-box">
         <div style="font-size:36px;margin-bottom:12px;filter:drop-shadow(0 0 12px rgba(255,160,180,0.7))">🌸</div>
-        <div style="font-family:'Great Vibes',cursive;font-size:28px;color:#c9a84c;margin-bottom:8px">
-            Undangan Pernikahan
-        </div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:#c9a84c;
-             letter-spacing:3px;text-transform:uppercase;opacity:0.7;margin-bottom:24px">
-            Intan &amp; Syahrial
-        </div>
-        <div id="open-invite-btn" style="
-            border:1px solid #c9a84c;padding:12px 28px;
-            font-family:'Cormorant Garamond',serif;
-            font-size:11px;letter-spacing:3px;text-transform:uppercase;
-            color:#c9a84c;margin-bottom:12px;
-            cursor:pointer;transition:all 0.3s;
-            pointer-events: auto;
-        ">♪ Buka Undangan</div>
-        <div style="font-size:10px;color:#c9a84c;opacity:0.45;letter-spacing:1px">
-            🎵 Janji Suci — Yovie &amp; Nuno
-        </div>
+        <div class="overlay-title">Undangan Pernikahan</div>
+        <div class="overlay-sub">Intan &amp; Syahrial</div>
+        <div class="overlay-btn" id="open-btn">♪ Buka Undangan</div>
+        <div class="overlay-music">🎵 Janji Suci — Yovie &amp; Nuno</div>
     </div>
 </div>
 
-<!-- ══ MUSIK BUTTON ══ -->
+<!-- ══ MUSIC BUTTON ══ -->
 <div id="music-tooltip">🎵 Janji Suci — Yovie &amp; Nuno</div>
-<button id="music-btn" style="display:none">♪</button>
+<button id="music-btn">♪</button>
 
-<!-- ══ HTML5 AUDIO ══ -->
+<!-- ══ AUDIO ══ -->
 <audio id="bg-audio" loop preload="auto">
     <source src="https://ia800905.us.archive.org/19/items/FREE_background_music_dac/07_-_Music_Box.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-/* ══════════════════════════════════════
-   SAKURA CANVAS
-══════════════════════════════════════ */
+// ============================================================
+// SAKURA CANVAS
+// ============================================================
 (function(){
     var canvas = document.getElementById('sakura-canvas');
     if (!canvas) return;
@@ -414,7 +434,7 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
     var W, H;
 
     function resize(){
-        W = canvas.width  = window.innerWidth;
+        W = canvas.width = window.innerWidth;
         H = canvas.height = window.innerHeight;
     }
     resize();
@@ -426,11 +446,11 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
         ctx.translate(x, y);
         ctx.rotate(rot);
 
-        var pinkShades = [
+        var shades = [
             [255,182,193], [255,160,175], [255,200,212],
             [250,145,165], [255,220,228]
         ];
-        var shade = pinkShades[Math.floor(Math.random()*pinkShades.length)];
+        var shade = shades[Math.floor(Math.random()*shades.length)];
 
         for(var i = 0; i < 5; i++){
             var angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
@@ -441,15 +461,6 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
             ctx.fillStyle = 'rgba('+shade[0]+','+shade[1]+','+shade[2]+',0.85)';
             ctx.fill();
             ctx.restore();
-        }
-        for(var j = 0; j < 5; j++){
-            var ang = (j / 5) * Math.PI * 2 - Math.PI / 2;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(Math.cos(ang) * r * 0.55, Math.sin(ang) * r * 0.55);
-            ctx.strokeStyle = 'rgba(220,100,130,0.25)';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
         }
         ctx.beginPath();
         ctx.arc(0, 0, r * 0.2, 0, Math.PI * 2);
@@ -467,21 +478,21 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
 
     function spawn(){
         return {
-            x:     Math.random() * W,
-            y:     -25,
-            r:     5 + Math.random() * 9,
-            rot:   Math.random() * Math.PI * 2,
-            spin:  (Math.random() - 0.5) * 0.035,
-            vx:    (Math.random() - 0.5) * 1.0,
-            vy:    0.5 + Math.random() * 1.2,
+            x: Math.random() * W,
+            y: -25,
+            r: 5 + Math.random() * 9,
+            rot: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 0.035,
+            vx: (Math.random() - 0.5) * 1.0,
+            vy: 0.5 + Math.random() * 1.2,
             alpha: 0.5 + Math.random() * 0.45,
-            sway:  Math.random() * Math.PI * 2,
+            sway: Math.random() * Math.PI * 2,
             swaySpeed: 0.012 + Math.random() * 0.018,
-            swayAmp:   0.5 + Math.random() * 1.0,
+            swayAmp: 0.5 + Math.random() * 1.0,
         };
     }
 
-    for(var i = 0; i < 65; i++){
+    for(var i = 0; i < 60; i++){
         var p = spawn();
         p.y = Math.random() * H;
         petals.push(p);
@@ -493,8 +504,8 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
         for(var i = petals.length - 1; i >= 0; i--){
             var p = petals[i];
             p.sway += p.swaySpeed;
-            p.x   += p.vx + Math.sin(p.sway) * p.swayAmp;
-            p.y   += p.vy;
+            p.x += p.vx + Math.sin(p.sway) * p.swayAmp;
+            p.y += p.vy;
             p.rot += p.spin;
             drawSakura(ctx, p.x, p.y, p.r, p.rot, p.alpha);
             if(p.y > H + 40 || p.x < -80 || p.x > W + 80){
@@ -506,110 +517,112 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
     frame();
 })();
 
-/* ══════════════════════════════════════
-   MUSIK & OVERLAY - FIXED
-══════════════════════════════════════ */
+// ============================================================
+// OVERLAY & MUSIC
+// ============================================================
 (function(){
-    var overlay = document.getElementById('music-overlay');
-    var btn = document.getElementById('music-btn');
+    var overlay = document.getElementById('overlay');
+    var overlayBox = document.getElementById('overlay-box');
+    var openBtn = document.getElementById('open-btn');
+    var musicBtn = document.getElementById('music-btn');
     var audio = document.getElementById('bg-audio');
     var tooltip = document.getElementById('music-tooltip');
-    var openBtn = document.getElementById('open-invite-btn');
     
-    var musicPlaying = false;
-    var audioStarted = false;
+    var isPlaying = false;
+    var isStarted = false;
     var YT_URL = 'https://www.youtube.com/watch?v=NMK3aFMbz9M';
     
     function showTooltip(msg) {
         if (!tooltip) return;
         tooltip.textContent = msg;
         tooltip.classList.add('show');
-        setTimeout(function(){ 
-            if (tooltip) tooltip.classList.remove('show'); 
+        clearTimeout(tooltip._timeout);
+        tooltip._timeout = setTimeout(function(){
+            tooltip.classList.remove('show');
         }, 3000);
     }
     
-    function startMusic() {
-        if (!overlay || !audio || !btn) return;
-        
-        // Hide overlay
+    function dismissOverlay() {
+        if (!overlay) return;
         overlay.classList.add('hidden');
-        
-        // Show music button
-        btn.style.display = 'flex';
+        musicBtn.style.display = 'flex';
         
         // Try to play audio
-        var playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.then(function(){
-                musicPlaying = true;
-                audioStarted = true;
-                btn.innerHTML = '♪';
-                btn.onclick = toggleMusic;
-                showTooltip('🎵 Janji Suci — Yovie & Nuno');
-            }).catch(function(){
-                audioStarted = false;
-                musicPlaying = false;
-                btn.innerHTML = '🎵';
-                btn.onclick = function() {
-                    window.open(YT_URL, '_blank');
-                    showTooltip('🎵 Membuka YouTube...');
-                };
-                showTooltip('Tap untuk buka musik di YouTube');
-            });
+        if (audio) {
+            var promise = audio.play();
+            if (promise !== undefined) {
+                promise.then(function(){
+                    isPlaying = true;
+                    isStarted = true;
+                    musicBtn.textContent = '♪';
+                    showTooltip('🎵 Janji Suci — Yovie & Nuno');
+                }).catch(function(){
+                    isStarted = false;
+                    musicBtn.textContent = '🎵';
+                    showTooltip('Tap untuk buka musik di YouTube');
+                    musicBtn.onclick = function(){
+                        window.open(YT_URL, '_blank');
+                        showTooltip('🎵 Membuka YouTube...');
+                    };
+                });
+            }
         }
     }
     
-    function toggleMusic() {
-        if (!audio || !btn) return;
-        
-        if (!audioStarted) {
-            window.open(YT_URL, '_blank');
-            showTooltip('🎵 Membuka YouTube...');
-            return;
-        }
-        
-        if (musicPlaying) {
-            audio.pause();
-            btn.innerHTML = '♩';
-            btn.style.opacity = '0.55';
-            musicPlaying = false;
-            showTooltip('⏸ Musik dijeda');
-        } else {
-            audio.play();
-            btn.innerHTML = '♪';
-            btn.style.opacity = '1';
-            musicPlaying = true;
-            showTooltip('▶ Janji Suci — Yovie & Nuno');
-        }
-    }
-    
-    // Attach click events
+    // Click handlers
     if (overlay) {
-        overlay.addEventListener('click', startMusic);
+        overlay.addEventListener('click', dismissOverlay);
+    }
+    if (overlayBox) {
+        overlayBox.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dismissOverlay();
+        });
     }
     if (openBtn) {
         openBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            startMusic();
+            dismissOverlay();
         });
     }
     
-    // Expose toggleMusic globally for button onclick
-    window.toggleMusic = toggleMusic;
+    // Music toggle
+    musicBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (!isStarted) {
+            window.open(YT_URL, '_blank');
+            showTooltip('🎵 Membuka YouTube...');
+            return;
+        }
+        if (isPlaying) {
+            audio.pause();
+            musicBtn.textContent = '♩';
+            musicBtn.style.opacity = '0.55';
+            isPlaying = false;
+            showTooltip('⏸ Musik dijeda');
+        } else {
+            audio.play();
+            musicBtn.textContent = '♪';
+            musicBtn.style.opacity = '1';
+            isPlaying = true;
+            showTooltip('▶ Janji Suci — Yovie & Nuno');
+        }
+    });
+    
+    // Expose for debugging
+    window.dismissOverlay = dismissOverlay;
 })();
 
-/* ══════════════════════════════════════
-   COUNTDOWN
-══════════════════════════════════════ */
+// ============================================================
+// COUNTDOWN
+// ============================================================
 (function(){
     function pad(n){ return String(n).padStart(2,'0'); }
     
-    function tick(){
-        var targetDate = new Date('2026-07-19T10:00:00+07:00').getTime();
+    function updateCountdown(){
+        var target = new Date('2026-07-19T10:00:00+07:00').getTime();
         var now = Date.now();
-        var diff = targetDate - now;
-        if(diff < 0) diff = 0;
+        var diff = Math.max(0, target - now);
         
         var d = Math.floor(diff / 86400000);
         var h = Math.floor((diff % 86400000) / 3600000);
@@ -617,18 +630,16 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
         var s = Math.floor((diff % 60000) / 1000);
         
         var ids = ['cd-days', 'cd-hours', 'cd-mins', 'cd-secs'];
-        var values = [d, h, m, s];
+        var vals = [d, h, m, s];
         
-        for(var i = 0; i < ids.length; i++) {
+        for(var i = 0; i < ids.length; i++){
             var el = document.getElementById(ids[i]);
-            if(el) {
-                el.textContent = pad(values[i]);
-            }
+            if(el) el.textContent = pad(vals[i]);
         }
     }
     
-    tick();
-    setInterval(tick, 1000);
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
 })();
 </script>
 """, unsafe_allow_html=True)
@@ -644,9 +655,6 @@ def gold_divider():
         <div class="gd-petal">🌸</div>
         <div class="gd-line"></div>
     </div>""", unsafe_allow_html=True)
-
-def s_label(txt):
-    st.markdown(f'<div class="s-label">— {txt} —</div>', unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -684,7 +692,7 @@ if photos.get("foto2") and photos.get("foto3"):
         <img src="data:image/png;base64,{photos['foto3']}" alt="foto 3"/>
     </div>""", unsafe_allow_html=True)
 
-# ── Nama Mempelai ──
+# ── Nama Mempelai (diperbaiki) ──
 st.markdown("""
 <div style="text-align:center;padding:0 24px 4px">
     <div class="undangan-label">🌸 Undangan Pernikahan 🌸</div>
@@ -713,7 +721,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-#  MEMPELAI
+#  MEMPELAI (diperbaiki: Intan Candra Nurul Hafizah)
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
 <div class="s-card" style="margin:0 20px 8px">
