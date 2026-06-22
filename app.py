@@ -39,6 +39,7 @@ st.markdown("""
         radial-gradient(ellipse at 15% 0%, rgba(255,182,193,0.07) 0%, transparent 45%),
         radial-gradient(ellipse at 85% 5%, rgba(255,182,193,0.05) 0%, transparent 40%),
         radial-gradient(ellipse at 50% 100%, rgba(139,28,46,0.12) 0%, transparent 50%) !important;
+    min-height: 100vh;
 }
 [data-testid="stHeader"] { background: transparent !important; }
 [data-testid="stToolbar"] { display: none !important; }
@@ -66,72 +67,6 @@ body, .stMarkdown, p, div {
     z-index: 0;
 }
 
-/* ── OVERLAY ── */
-#overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(10,2,6,0.92);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 99999;
-    cursor: pointer;
-    transition: opacity 0.6s ease;
-}
-#overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-#overlay-box {
-    border: 1px solid rgba(201,168,76,0.5);
-    padding: 36px 48px;
-    text-align: center;
-    background: rgba(13,2,8,0.8);
-    max-width: 340px;
-    pointer-events: auto;
-    cursor: pointer;
-}
-#overlay-box:hover {
-    border-color: rgba(201,168,76,0.8);
-}
-.overlay-title {
-    font-family: 'Great Vibes', cursive;
-    font-size: 28px;
-    color: #c9a84c;
-    margin: 8px 0;
-}
-.overlay-sub {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 12px;
-    color: #c9a84c;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    opacity: 0.7;
-    margin-bottom: 24px;
-}
-.overlay-btn {
-    border: 1px solid #c9a84c;
-    padding: 12px 28px;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: #c9a84c;
-    margin-bottom: 12px;
-    transition: all 0.3s;
-    display: inline-block;
-}
-.overlay-btn:hover {
-    background: rgba(201,168,76,0.15);
-}
-.overlay-music {
-    font-size: 10px;
-    color: #c9a84c;
-    opacity: 0.45;
-    letter-spacing: 1px;
-}
-
 /* ── MUSIC BUTTON ── */
 #music-btn {
     position: fixed;
@@ -144,14 +79,17 @@ body, .stMarkdown, p, div {
     font-size: 22px;
     cursor: pointer;
     z-index: 9999;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 0 24px rgba(201,168,76,0.3);
     transition: all 0.3s;
 }
 #music-btn:hover { background: rgba(201,168,76,0.15); transform: scale(1.1); }
-#music-tooltip {
+#music-btn.paused { opacity: 0.55; }
+
+/* ── MUSIC INDICATOR ── */
+#music-indicator {
     position: fixed;
     bottom: 84px; right: 20px;
     background: rgba(13,2,8,0.92);
@@ -167,13 +105,14 @@ body, .stMarkdown, p, div {
     transition: opacity 0.4s;
     pointer-events: none;
 }
-#music-tooltip.show { opacity: 1; }
+#music-indicator.show { opacity: 1; }
 
 /* ── HERO ── */
 .hero-wrap {
     text-align: center;
-    padding: 64px 24px 40px;
+    padding: 40px 24px 30px;
     position: relative;
+    z-index: 1;
 }
 .bismillah-text {
     font-size: 22px;
@@ -285,6 +224,7 @@ body, .stMarkdown, p, div {
     padding:28px 24px;
     position:relative;
     background:rgba(139,28,46,0.04);
+    z-index: 1;
 }
 .s-card-top::before {
     content:''; position:absolute;
@@ -312,7 +252,7 @@ body, .stMarkdown, p, div {
 .mempelai-parents { font-size:12px; color:#c9a84c; opacity:0.65; font-style:italic; text-align:center; margin-top:4px; }
 
 /* ── EVENTS ── */
-.events-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 20px 20px; }
+.events-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 20px 20px; z-index:1; position:relative; }
 .event-card {
     border:1px solid rgba(201,168,76,0.3);
     padding:22px 14px; text-align:center;
@@ -336,6 +276,7 @@ body, .stMarkdown, p, div {
     border:1px solid rgba(201,168,76,0.15);
     background:linear-gradient(135deg,rgba(139,28,46,0.08),rgba(255,182,193,0.04));
     text-align:center; position:relative; overflow:hidden;
+    z-index: 1;
 }
 .countdown-wrap::before {
     content:'🌸 🌸 🌸';
@@ -354,7 +295,7 @@ body, .stMarkdown, p, div {
 .cd-sep { font-family:'Playfair Display',serif; font-size:32px; color:#c9a84c; opacity:0.35; align-self:flex-start; padding-top:6px; line-height:1; }
 
 /* ── LOCATION ── */
-.khit-card { margin:0 20px 20px; border:1px solid rgba(201,168,76,0.22); padding:24px; text-align:center; background:rgba(255,182,193,0.02); }
+.khit-card { margin:0 20px 20px; border:1px solid rgba(201,168,76,0.22); padding:24px; text-align:center; background:rgba(255,182,193,0.02); z-index:1; position:relative; }
 .khit-also { font-size:9px; letter-spacing:4px; color:#c9a84c; opacity:0.5; text-transform:uppercase; margin-bottom:8px; }
 .khit-title { font-family:'Great Vibes',cursive !important; font-size:36px !important; color:#c9a84c !important; margin-bottom:4px; }
 
@@ -365,7 +306,7 @@ body, .stMarkdown, p, div {
 .wish-time { font-size:10px; color:#c9a84c; opacity:0.4; margin-top:4px; }
 
 /* ── FOOTER ── */
-.footer-wrap { text-align:center; padding:32px 24px 56px; border-top:1px solid rgba(201,168,76,0.1); }
+.footer-wrap { text-align:center; padding:32px 24px 56px; border-top:1px solid rgba(201,168,76,0.1); position:relative; z-index:1; }
 .footer-names { font-family:'Great Vibes',cursive !important; font-size:34px !important; color:#c9a84c !important; margin-bottom:8px; }
 .footer-sub { font-size:10px; letter-spacing:3px; color:#c9a84c; opacity:0.4; text-transform:uppercase; margin-bottom:12px; }
 .wassalam { font-size:11px; color:#c9a84c; opacity:0.3; font-style:italic; }
@@ -402,19 +343,8 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
 <!-- ══ SAKURA CANVAS ══ -->
 <canvas id="sakura-canvas"></canvas>
 
-<!-- ══ OVERLAY ══ -->
-<div id="overlay">
-    <div id="overlay-box">
-        <div style="font-size:36px;margin-bottom:12px;filter:drop-shadow(0 0 12px rgba(255,160,180,0.7))">🌸</div>
-        <div class="overlay-title">Undangan Pernikahan</div>
-        <div class="overlay-sub">Intan &amp; Syahrial</div>
-        <div class="overlay-btn" id="open-btn">♪ Buka Undangan</div>
-        <div class="overlay-music">🎵 Janji Suci — Yovie &amp; Nuno</div>
-    </div>
-</div>
-
 <!-- ══ MUSIC BUTTON ══ -->
-<div id="music-tooltip">🎵 Janji Suci — Yovie &amp; Nuno</div>
+<div id="music-indicator">🎵 Janji Suci — Yovie &amp; Nuno</div>
 <button id="music-btn">♪</button>
 
 <!-- ══ AUDIO ══ -->
@@ -518,99 +448,77 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
 })();
 
 // ============================================================
-// OVERLAY & MUSIC
+// MUSIC - Langsung play tanpa overlay
 // ============================================================
 (function(){
-    var overlay = document.getElementById('overlay');
-    var overlayBox = document.getElementById('overlay-box');
-    var openBtn = document.getElementById('open-btn');
-    var musicBtn = document.getElementById('music-btn');
     var audio = document.getElementById('bg-audio');
-    var tooltip = document.getElementById('music-tooltip');
+    var btn = document.getElementById('music-btn');
+    var indicator = document.getElementById('music-indicator');
     
     var isPlaying = false;
-    var isStarted = false;
     var YT_URL = 'https://www.youtube.com/watch?v=NMK3aFMbz9M';
+    var tooltipTimeout = null;
     
-    function showTooltip(msg) {
-        if (!tooltip) return;
-        tooltip.textContent = msg;
-        tooltip.classList.add('show');
-        clearTimeout(tooltip._timeout);
-        tooltip._timeout = setTimeout(function(){
-            tooltip.classList.remove('show');
+    function showIndicator(msg) {
+        if (!indicator) return;
+        indicator.textContent = msg;
+        indicator.classList.add('show');
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = setTimeout(function(){
+            indicator.classList.remove('show');
         }, 3000);
     }
     
-    function dismissOverlay() {
-        if (!overlay) return;
-        overlay.classList.add('hidden');
-        musicBtn.style.display = 'flex';
-        
-        // Try to play audio
-        if (audio) {
-            var promise = audio.play();
-            if (promise !== undefined) {
-                promise.then(function(){
-                    isPlaying = true;
-                    isStarted = true;
-                    musicBtn.textContent = '♪';
-                    showTooltip('🎵 Janji Suci — Yovie & Nuno');
-                }).catch(function(){
-                    isStarted = false;
-                    musicBtn.textContent = '🎵';
-                    showTooltip('Tap untuk buka musik di YouTube');
-                    musicBtn.onclick = function(){
-                        window.open(YT_URL, '_blank');
-                        showTooltip('🎵 Membuka YouTube...');
-                    };
-                });
-            }
+    // Auto-play music when page loads
+    if (audio) {
+        var promise = audio.play();
+        if (promise !== undefined) {
+            promise.then(function(){
+                isPlaying = true;
+                btn.textContent = '♪';
+                btn.classList.remove('paused');
+                showIndicator('🎵 Janji Suci — Yovie & Nuno');
+            }).catch(function(){
+                isPlaying = false;
+                btn.textContent = '🎵';
+                btn.classList.add('paused');
+                showIndicator('🔇 Klik untuk buka musik');
+            });
         }
     }
     
-    // Click handlers
-    if (overlay) {
-        overlay.addEventListener('click', dismissOverlay);
-    }
-    if (overlayBox) {
-        overlayBox.addEventListener('click', function(e) {
-            e.stopPropagation();
-            dismissOverlay();
-        });
-    }
-    if (openBtn) {
-        openBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            dismissOverlay();
-        });
-    }
-    
-    // Music toggle
-    musicBtn.addEventListener('click', function(e) {
+    // Toggle music on button click
+    btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        if (!isStarted) {
+        
+        if (!audio) return;
+        
+        // If audio hasn't started (blocked by browser), open YouTube
+        if (!isPlaying && audio.paused && audio.currentTime === 0) {
             window.open(YT_URL, '_blank');
-            showTooltip('🎵 Membuka YouTube...');
+            showIndicator('🎵 Membuka YouTube...');
             return;
         }
+        
         if (isPlaying) {
             audio.pause();
-            musicBtn.textContent = '♩';
-            musicBtn.style.opacity = '0.55';
+            btn.textContent = '♩';
+            btn.classList.add('paused');
             isPlaying = false;
-            showTooltip('⏸ Musik dijeda');
+            showIndicator('⏸ Musik dijeda');
         } else {
             audio.play();
-            musicBtn.textContent = '♪';
-            musicBtn.style.opacity = '1';
+            btn.textContent = '♪';
+            btn.classList.remove('paused');
             isPlaying = true;
-            showTooltip('▶ Janji Suci — Yovie & Nuno');
+            showIndicator('▶ Janji Suci — Yovie & Nuno');
         }
     });
     
-    // Expose for debugging
-    window.dismissOverlay = dismissOverlay;
+    // Handle audio ended (shouldn't happen with loop)
+    audio.addEventListener('ended', function() {
+        audio.play();
+    });
 })();
 
 // ============================================================
@@ -692,7 +600,7 @@ if photos.get("foto2") and photos.get("foto3"):
         <img src="data:image/png;base64,{photos['foto3']}" alt="foto 3"/>
     </div>""", unsafe_allow_html=True)
 
-# ── Nama Mempelai (diperbaiki) ──
+# ── Nama Mempelai ──
 st.markdown("""
 <div style="text-align:center;padding:0 24px 4px">
     <div class="undangan-label">🌸 Undangan Pernikahan 🌸</div>
@@ -721,7 +629,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-#  MEMPELAI (diperbaiki: Intan Candra Nurul Hafizah)
+#  MEMPELAI
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
 <div class="s-card" style="margin:0 20px 8px">
