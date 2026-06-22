@@ -623,7 +623,7 @@ st.markdown("""
 st.markdown("""
 <div class="s-card" style="margin:0 20px 8px">
     <div class="s-label">— Mempelai Wanita —</div>
-    <span class="mempelai-name">Intan Candra Nurul Hafiyah</span>
+    <span class="mempelai-name">Intan Candra Nurul Hafizah</span>
     <div class="mempelai-parents">Putri dari Alm. Bapak Fadli &amp; Ibu Sri Sumarti (Wiwik)</div>
 </div>
 <div style="text-align:center;margin:8px 0">
