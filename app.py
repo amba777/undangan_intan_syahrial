@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import os
 import base64
+import time
 
 st.set_page_config(
     page_title="Undangan Pernikahan Intan & Syahrial",
@@ -25,9 +26,9 @@ if "wishes" not in st.session_state:
         {"name": "Keluarga Besar", "text": "Semoga menjadi keluarga yang Sakinah, Mawaddah, Warahmah. Aamiin Ya Rabbal Alamin.", "time": "Baru saja"}
     ]
 
-# Check for music file with various possible names
+# Cari file MP3 dengan berbagai kemungkinan nama
 music_file_names = [
-    "Yovie & Nuno - Janji Suci (Video Clip).mp3",
+    "janji_suci.mp3",
 ]
 
 music_file = None
@@ -40,7 +41,7 @@ for name in music_file_names:
 music_exists = music_file is not None
 
 # ══════════════════════════════════════════════════════════════
-#  GLOBAL STYLES + ELEGANT SAKURA BACKGROUND
+#  CSS + HTML
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
@@ -101,7 +102,6 @@ body, .stMarkdown, p, div {
 .sakura-petal-bg:nth-child(7) { left: 88%; animation-delay: 10s; animation-duration: 21s; }
 .sakura-petal-bg:nth-child(8) { left: 50%; animation-delay: 12s; animation-duration: 26s; font-size: 18px; }
 
-/* Soft glow overlay */
 #glow-overlay {
     position: fixed;
     top: 0; left: 0;
@@ -420,7 +420,7 @@ hr { border-color:rgba(201,168,76,0.08) !important; }
 <audio id="bg-audio" loop preload="auto">
 """, unsafe_allow_html=True)
 
-# Use local MP3 if exists
+# Gunakan file MP3 lokal jika ada
 if music_exists:
     with open(music_file, "rb") as f:
         audio_data = base64.b64encode(f.read()).decode()
@@ -438,11 +438,11 @@ st.markdown("""
 
 <script>
 // ============================================================
-// ELEGANT SAKURA BACKGROUND - floating petals
+// SAKURA BACKGROUND
 // ============================================================
 (function(){
     var petals = document.querySelectorAll('.sakura-petal-bg');
-    petals.forEach(function(petal, index) {
+    petals.forEach(function(petal) {
         var duration = 18 + Math.random() * 10;
         var delay = Math.random() * 15;
         var startX = Math.random() * 90 + 5;
@@ -456,7 +456,7 @@ st.markdown("""
 })();
 
 // ============================================================
-// MUSIC - Janji Suci by Yovie & Nuno
+// MUSIC - FIXED
 // ============================================================
 (function(){
     var audio = document.getElementById('bg-audio');
@@ -476,18 +476,20 @@ st.markdown("""
         }, 3000);
     }
     
-    // Auto-play music
-    if (audio) {
+    // Fungsi untuk memutar audio
+    function playAudio() {
+        if (!audio) return;
         audio.volume = 0.7;
         var promise = audio.play();
         if (promise !== undefined) {
-            promise.then(function(){
+            promise.then(function() {
                 isPlaying = true;
                 btn.textContent = '♪';
                 btn.classList.remove('paused');
                 btn.classList.add('playing');
                 showIndicator('🎵 Janji Suci — Yovie & Nuno');
-            }).catch(function(){
+            }).catch(function(error) {
+                console.log('Audio play error:', error);
                 isPlaying = false;
                 btn.textContent = '🎵';
                 btn.classList.add('paused');
@@ -497,7 +499,13 @@ st.markdown("""
         }
     }
     
-    // Toggle music
+    // Coba putar audio saat halaman dimuat
+    if (audio) {
+        // Tunggu sebentar sebelum play
+        setTimeout(playAudio, 500);
+    }
+    
+    // Toggle music saat tombol diklik
     btn.addEventListener('click', function(e) {
         e.stopPropagation();
         if (!audio) return;
@@ -510,19 +518,11 @@ st.markdown("""
             isPlaying = false;
             showIndicator('⏸ Musik dijeda');
         } else {
-            audio.play().then(function(){
-                btn.textContent = '♪';
-                btn.classList.remove('paused');
-                btn.classList.add('playing');
-                isPlaying = true;
-                showIndicator('▶ Janji Suci — Yovie & Nuno');
-            }).catch(function(){
-                showIndicator('❌ Gagal memutar musik');
-            });
+            playAudio();
         }
     });
     
-    // Handle audio ended
+    // Handle audio ended - loop
     audio.addEventListener('ended', function() {
         audio.currentTime = 0;
         audio.play();
@@ -536,30 +536,42 @@ st.markdown("""
     function pad(n){ return String(n).padStart(2,'0'); }
     
     function updateCountdown(){
-        var target = new Date('2026-07-19T10:00:00+07:00').getTime();
-        var now = Date.now();
-        var diff = Math.max(0, target - now);
-        
-        var days = Math.floor(diff / 86400000);
-        var hours = Math.floor((diff % 86400000) / 3600000);
-        var minutes = Math.floor((diff % 3600000) / 60000);
-        var seconds = Math.floor((diff % 60000) / 1000);
-        
-        var ids = ['cd-days', 'cd-hours', 'cd-mins', 'cd-secs'];
-        var vals = [days, hours, minutes, seconds];
-        
-        for(var i = 0; i < ids.length; i++){
-            var el = document.getElementById(ids[i]);
-            if(el) {
-                el.textContent = pad(vals[i]);
+        try {
+            var target = new Date('2026-07-19T10:00:00+07:00').getTime();
+            var now = Date.now();
+            var diff = Math.max(0, target - now);
+            
+            var days = Math.floor(diff / 86400000);
+            var hours = Math.floor((diff % 86400000) / 3600000);
+            var minutes = Math.floor((diff % 3600000) / 60000);
+            var seconds = Math.floor((diff % 60000) / 1000);
+            
+            var ids = ['cd-days', 'cd-hours', 'cd-mins', 'cd-secs'];
+            var vals = [days, hours, minutes, seconds];
+            
+            for(var i = 0; i < ids.length; i++){
+                var el = document.getElementById(ids[i]);
+                if(el) {
+                    el.textContent = pad(vals[i]);
+                } else {
+                    console.log('Element not found:', ids[i]);
+                }
             }
+        } catch(e) {
+            console.log('Countdown error:', e);
         }
     }
     
-    // Jalankan langsung dan setiap detik
+    // Jalankan segera
     updateCountdown();
+    // Jalankan setiap detik
     setInterval(updateCountdown, 1000);
+    console.log('Countdown started!');
 })();
+
+// Log untuk debugging
+console.log('Script loaded successfully!');
+console.log('Music file exists:', """ + str(music_exists) + """ );
 </script>
 """, unsafe_allow_html=True)
 
