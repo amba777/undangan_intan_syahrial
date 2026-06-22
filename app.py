@@ -104,6 +104,25 @@ body, .stMarkdown, p, div {
 }
 #music-tooltip.show { opacity: 1; }
 
+/* ── OVERLAY ── */
+#music-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,2,6,0.88);
+    backdrop-filter: blur(6px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    cursor: pointer;
+}
+#music-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+}
+
 /* ── HERO ── */
 .hero-wrap {
     text-align: center;
@@ -344,19 +363,13 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
 <canvas id="sakura-canvas"></canvas>
 
 <!-- ══ MUSIC WELCOME OVERLAY ══ -->
-<div id="music-overlay" style="
-    position:fixed;inset:0;
-    background:rgba(10,2,6,0.88);
-    backdrop-filter:blur(6px);
-    display:flex;flex-direction:column;
-    align-items:center;justify-content:center;
-    z-index:99999;cursor:pointer;
-">
+<div id="music-overlay">
     <div style="
         border:1px solid rgba(201,168,76,0.5);
         padding:36px 48px;text-align:center;
         background:rgba(13,2,8,0.7);
         max-width:320px;
+        pointer-events: auto;
     ">
         <div style="font-size:36px;margin-bottom:12px;filter:drop-shadow(0 0 12px rgba(255,160,180,0.7))">🌸</div>
         <div style="font-family:'Great Vibes',cursive;font-size:28px;color:#c9a84c;margin-bottom:8px">
@@ -372,6 +385,7 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
             font-size:11px;letter-spacing:3px;text-transform:uppercase;
             color:#c9a84c;margin-bottom:12px;
             cursor:pointer;transition:all 0.3s;
+            pointer-events: auto;
         ">♪ Buka Undangan</div>
         <div style="font-size:10px;color:#c9a84c;opacity:0.45;letter-spacing:1px">
             🎵 Janji Suci — Yovie &amp; Nuno
@@ -379,9 +393,9 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
     </div>
 </div>
 
-<!-- ══ MUSIK BUTTON (shown after overlay dismissed) ══ -->
+<!-- ══ MUSIK BUTTON ══ -->
 <div id="music-tooltip">🎵 Janji Suci — Yovie &amp; Nuno</div>
-<button id="music-btn" onclick="toggleMusic()" title="Putar / Pause Musik" style="display:none">♪</button>
+<button id="music-btn" style="display:none">♪</button>
 
 <!-- ══ HTML5 AUDIO ══ -->
 <audio id="bg-audio" loop preload="auto">
@@ -406,7 +420,6 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
     resize();
     window.addEventListener('resize', resize);
 
-    /* SVG-style 5-petal sakura shape */
     function drawSakura(ctx, x, y, r, rot, alpha){
         ctx.save();
         ctx.globalAlpha = alpha;
@@ -429,7 +442,6 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
             ctx.fill();
             ctx.restore();
         }
-        /* notch lines */
         for(var j = 0; j < 5; j++){
             var ang = (j / 5) * Math.PI * 2 - Math.PI / 2;
             ctx.beginPath();
@@ -439,12 +451,10 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
             ctx.lineWidth = 0.5;
             ctx.stroke();
         }
-        /* center */
         ctx.beginPath();
         ctx.arc(0, 0, r * 0.2, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,230,180,0.95)';
         ctx.fill();
-        /* stamen dots */
         for(var k = 0; k < 5; k++){
             var sa = (k/5)*Math.PI*2;
             ctx.beginPath();
@@ -471,7 +481,6 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
         };
     }
 
-    /* seed initial petals spread across screen */
     for(var i = 0; i < 65; i++){
         var p = spawn();
         p.y = Math.random() * H;
@@ -498,113 +507,100 @@ hr { border-color:rgba(201,168,76,0.1) !important; }
 })();
 
 /* ══════════════════════════════════════
-   MUSIK — Fixed version
+   MUSIK & OVERLAY - FIXED
 ══════════════════════════════════════ */
-var musicPlaying = false;
-var audioStarted  = false;
-var YT_URL = 'https://www.youtube.com/watch?v=NMK3aFMbz9M';
-
-// Function to start music (called from overlay click)
-function startMusic() {
+(function(){
     var overlay = document.getElementById('music-overlay');
-    var btn     = document.getElementById('music-btn');
-    var audio   = document.getElementById('bg-audio');
-
-    if (!overlay) return;
-
-    // hide overlay
-    overlay.style.transition = 'opacity 0.6s';
-    overlay.style.opacity = '0';
-    setTimeout(function(){ 
-        if (overlay) overlay.style.display = 'none'; 
-    }, 650);
-
-    // show music btn
-    if (btn) btn.style.display = 'flex';
-
-    // try HTML5 audio play
-    if (audio) {
+    var btn = document.getElementById('music-btn');
+    var audio = document.getElementById('bg-audio');
+    var tooltip = document.getElementById('music-tooltip');
+    var openBtn = document.getElementById('open-invite-btn');
+    
+    var musicPlaying = false;
+    var audioStarted = false;
+    var YT_URL = 'https://www.youtube.com/watch?v=NMK3aFMbz9M';
+    
+    function showTooltip(msg) {
+        if (!tooltip) return;
+        tooltip.textContent = msg;
+        tooltip.classList.add('show');
+        setTimeout(function(){ 
+            if (tooltip) tooltip.classList.remove('show'); 
+        }, 3000);
+    }
+    
+    function startMusic() {
+        if (!overlay || !audio || !btn) return;
+        
+        // Hide overlay
+        overlay.classList.add('hidden');
+        
+        // Show music button
+        btn.style.display = 'flex';
+        
+        // Try to play audio
         var playPromise = audio.play();
         if (playPromise !== undefined) {
             playPromise.then(function(){
                 musicPlaying = true;
                 audioStarted = true;
-                if (btn) btn.innerHTML = '♪';
+                btn.innerHTML = '♪';
+                btn.onclick = toggleMusic;
                 showTooltip('🎵 Janji Suci — Yovie & Nuno');
             }).catch(function(){
-                // browser blocked — show YouTube link instead
                 audioStarted = false;
                 musicPlaying = false;
-                if (btn) {
-                    btn.innerHTML = '🎵';
-                    btn.onclick = function() {
-                        window.open(YT_URL, '_blank');
-                        showTooltip('🎵 Membuka YouTube...');
-                    };
-                }
+                btn.innerHTML = '🎵';
+                btn.onclick = function() {
+                    window.open(YT_URL, '_blank');
+                    showTooltip('🎵 Membuka YouTube...');
+                };
                 showTooltip('Tap untuk buka musik di YouTube');
             });
         }
     }
-}
-
-// Attach click event to overlay
-document.addEventListener('DOMContentLoaded', function() {
-    var overlay = document.getElementById('music-overlay');
+    
+    function toggleMusic() {
+        if (!audio || !btn) return;
+        
+        if (!audioStarted) {
+            window.open(YT_URL, '_blank');
+            showTooltip('🎵 Membuka YouTube...');
+            return;
+        }
+        
+        if (musicPlaying) {
+            audio.pause();
+            btn.innerHTML = '♩';
+            btn.style.opacity = '0.55';
+            musicPlaying = false;
+            showTooltip('⏸ Musik dijeda');
+        } else {
+            audio.play();
+            btn.innerHTML = '♪';
+            btn.style.opacity = '1';
+            musicPlaying = true;
+            showTooltip('▶ Janji Suci — Yovie & Nuno');
+        }
+    }
+    
+    // Attach click events
     if (overlay) {
         overlay.addEventListener('click', startMusic);
     }
-    
-    // Also attach to the button inside overlay
-    var openBtn = document.getElementById('open-invite-btn');
     if (openBtn) {
         openBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             startMusic();
         });
     }
-});
-
-function toggleMusic() {
-    var audio = document.getElementById('bg-audio');
-    var btn   = document.getElementById('music-btn');
-
-    if (!audio || !btn) return;
-
-    if (!audioStarted) {
-        // open YouTube in new tab as fallback
-        window.open(YT_URL, '_blank');
-        showTooltip('🎵 Membuka YouTube...');
-        return;
-    }
-
-    if (musicPlaying) {
-        audio.pause();
-        btn.innerHTML = '♩';
-        btn.style.opacity = '0.55';
-        musicPlaying = false;
-        showTooltip('⏸ Musik dijeda');
-    } else {
-        audio.play();
-        btn.innerHTML = '♪';
-        btn.style.opacity = '1';
-        musicPlaying = true;
-        showTooltip('▶ Janji Suci — Yovie & Nuno');
-    }
-}
-
-var tooltip = document.getElementById('music-tooltip');
-function showTooltip(msg) {
-    if (!tooltip) return;
-    tooltip.textContent = msg;
-    tooltip.classList.add('show');
-    setTimeout(function(){ 
-        if (tooltip) tooltip.classList.remove('show'); 
-    }, 3000);
-}
+    
+    // Expose toggleMusic globally for button onclick
+    window.toggleMusic = toggleMusic;
+})();
 
 /* ══════════════════════════════════════
-   COUNTDOWN — Fixed version
+   COUNTDOWN
 ══════════════════════════════════════ */
 (function(){
     function pad(n){ return String(n).padStart(2,'0'); }
@@ -631,9 +627,7 @@ function showTooltip(msg) {
         }
     }
     
-    // Run immediately
     tick();
-    // Then update every second
     setInterval(tick, 1000);
 })();
 </script>
@@ -724,7 +718,7 @@ st.markdown("""
 st.markdown("""
 <div class="s-card" style="margin:0 20px 8px">
     <div class="s-label">— Mempelai Wanita —</div>
-    <span class="mempelai-name">Intan Candra Nurul Hafiyah</span>
+    <span class="mempelai-name">Intan Candra Nurul Hafizah</span>
     <div class="mempelai-parents">Putri dari Alm. Bapak Fadli &amp; Ibu Sri Sumarti (Wiwik)</div>
 </div>
 <div style="text-align:center;margin:10px 0;font-size:28px;filter:drop-shadow(0 0 6px rgba(255,160,180,0.4))">🌸</div>
