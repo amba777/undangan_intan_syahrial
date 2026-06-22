@@ -5,7 +5,7 @@ import base64
 
 st.set_page_config(
     page_title="Undangan Pernikahan Intan & Syahrial",
-    page_icon="🌸",
+    page_icon="💍",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -26,497 +26,443 @@ if "wishes" not in st.session_state:
     ]
 
 # Cari file MP3
-music_file_names = [
-    "janji_suci.mp3",
-]
+music_file = os.path.join(os.path.dirname(__file__), "janji_suci.mp3")
+music_exists = os.path.exists(music_file)
 
-music_file = None
-for name in music_file_names:
-    test_path = os.path.join(os.path.dirname(__file__), name)
-    if os.path.exists(test_path):
-        music_file = test_path
-        break
-
-music_exists = music_file is not None
+# ── Encode audio ──
+audio_b64 = ""
+if music_exists:
+    with open(music_file, "rb") as f:
+        audio_b64 = base64.b64encode(f.read()).decode()
 
 # ══════════════════════════════════════════════════════════════
-#  CSS + HTML
+#  FULL PAGE HTML — satu blok besar agar script & elemen sinkron
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@400;600;700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 
 <style>
+/* ── RESET & BASE ── */
 * { margin:0; padding:0; box-sizing:border-box; }
 
 [data-testid="stAppViewContainer"] {
-    background: #0d0208 !important;
+    background: #0f0b08 !important;
     min-height: 100vh;
 }
-[data-testid="stHeader"] { background: transparent !important; }
-[data-testid="stToolbar"] { display: none !important; }
-.stDeployButton { display: none !important; }
-section[data-testid="stSidebar"] { display: none !important; }
-#MainMenu, footer, header { visibility: hidden !important; }
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+.stDeployButton,
+section[data-testid="stSidebar"],
+#MainMenu, footer, header { display:none !important; visibility:hidden !important; }
 
 [data-testid="block-container"] {
     padding: 0 !important;
-    max-width: 540px !important;
+    max-width: 560px !important;
     margin: 0 auto !important;
 }
 
 body, .stMarkdown, p, div {
     font-family: 'Cormorant Garamond', serif !important;
-    color: #f5e6d3 !important;
+    color: #e8d5b7 !important;
 }
 
-/* ── SAKURA BACKGROUND ── */
-#sakura-bg {
+/* ── SUBTLE TEXTURE OVERLAY ── */
+#texture-overlay {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    inset: 0;
     pointer-events: none;
     z-index: 0;
-    overflow: hidden;
+    background:
+        radial-gradient(ellipse 80% 40% at 50% 0%,   rgba(180,140,80,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 30% at 50% 100%, rgba(120,60,40,0.07) 0%, transparent 70%);
 }
-.sakura-petal-bg {
-    position: absolute;
-    opacity: 0.06;
-    font-size: 28px;
-    animation: floatPetal 20s infinite ease-in-out;
-    color: #ffb6c1;
-}
-@keyframes floatPetal {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0.06; }
-    25% { transform: translate(30px, -20px) rotate(90deg); opacity: 0.10; }
-    50% { transform: translate(-20px, -40px) rotate(180deg); opacity: 0.04; }
-    75% { transform: translate(20px, -60px) rotate(270deg); opacity: 0.10; }
-    100% { transform: translate(0, -80px) rotate(360deg); opacity: 0.06; }
-}
-.sakura-petal-bg:nth-child(1) { left: 5%; animation-delay: 0s; animation-duration: 22s; }
-.sakura-petal-bg:nth-child(2) { left: 15%; animation-delay: 3s; animation-duration: 18s; font-size: 20px; }
-.sakura-petal-bg:nth-child(3) { left: 30%; animation-delay: 6s; animation-duration: 25s; }
-.sakura-petal-bg:nth-child(4) { left: 45%; animation-delay: 2s; animation-duration: 20s; font-size: 24px; }
-.sakura-petal-bg:nth-child(5) { left: 60%; animation-delay: 8s; animation-duration: 23s; }
-.sakura-petal-bg:nth-child(6) { left: 75%; animation-delay: 4s; animation-duration: 19s; font-size: 22px; }
-.sakura-petal-bg:nth-child(7) { left: 88%; animation-delay: 10s; animation-duration: 21s; }
-.sakura-petal-bg:nth-child(8) { left: 50%; animation-delay: 12s; animation-duration: 26s; font-size: 18px; }
 
-#glow-overlay {
+/* ── MUSIC BUTTON ── */
+#music-btn {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 0;
-    background: 
-        radial-gradient(ellipse at 20% 10%, rgba(255,182,193,0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(255,182,193,0.03) 0%, transparent 40%),
-        radial-gradient(ellipse at 50% 100%, rgba(139,28,46,0.06) 0%, transparent 50%);
+    bottom: 28px; right: 28px;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(15,11,8,0.95);
+    border: 1px solid rgba(180,148,80,0.5);
+    color: #c9a84c;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+    font-family: serif;
 }
+#music-btn:hover { border-color:#c9a84c; background:rgba(201,168,76,0.08); }
+#music-btn.playing { animation: ring 3s ease-in-out infinite; }
+@keyframes ring {
+    0%,100% { box-shadow: 0 2px 20px rgba(0,0,0,0.5), 0 0 0 0 rgba(201,168,76,0.15); }
+    50%      { box-shadow: 0 2px 20px rgba(0,0,0,0.5), 0 0 0 8px rgba(201,168,76,0); }
+}
+#music-label {
+    position: fixed;
+    bottom: 84px; right: 20px;
+    background: rgba(15,11,8,0.95);
+    border: 1px solid rgba(180,148,80,0.3);
+    color: #c9a84c;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10.5px; letter-spacing: 1.5px;
+    padding: 5px 14px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s;
+    white-space: nowrap;
+}
+#music-label.show { opacity: 1; }
+
+/* ══════════════════════════════════════
+   LAYOUT SECTIONS
+══════════════════════════════════════ */
 
 /* ── HERO ── */
-.hero-wrap {
+.inv-hero {
     text-align: center;
-    padding: 40px 24px 30px;
-    position: relative;
-    z-index: 1;
+    padding: 56px 28px 36px;
+    position: relative; z-index: 1;
 }
-.bismillah-text {
-    font-size: 22px;
+.inv-bismillah {
+    font-size: 24px;
     color: #c9a84c;
-    margin-bottom: 6px;
-    letter-spacing: 2px;
-    text-shadow: 0 0 20px rgba(201,168,76,0.3);
+    letter-spacing: 3px;
+    text-shadow: 0 0 30px rgba(201,168,76,0.2);
+    margin-bottom: 10px;
 }
-.salam-text {
-    font-size: 12px;
-    color: #c9a84c;
-    opacity: 0.75;
-    font-style: italic;
-    letter-spacing: 1.5px;
+.inv-salam {
+    font-size: 11px; letter-spacing: 2.5px;
+    color: #c9a84c; opacity: 0.5;
+    text-transform: uppercase; font-style: italic;
 }
-.sakura-branch {
-    text-align: center;
-    font-size: 32px;
-    margin: 12px 0 24px;
-    filter: drop-shadow(0 0 8px rgba(255,160,180,0.2));
-    opacity: 0.6;
+.inv-ornament {
+    color: #c9a84c; opacity: 0.25;
+    font-size: 13px; letter-spacing: 8px;
+    margin: 18px 0;
 }
 
 /* ── PHOTO FRAME ── */
-.frame-outer {
+.inv-frame-wrap {
     position: relative;
-    width: 240px;
+    width: 220px;
     margin: 0 auto 20px;
 }
-.frame-outer img {
+.inv-frame-wrap img {
     width: 100%;
-    height: 310px;
+    height: 290px;
     object-fit: cover;
     display: block;
-    border: 1.5px solid rgba(201,168,76,0.55);
-    outline: 5px solid rgba(13,2,8,0.85);
-    outline-offset: -9px;
+    border: 1px solid rgba(201,168,76,0.4);
+    filter: sepia(0.1) brightness(0.95);
 }
-.frame-corner {
+.inv-frame-corner {
     position: absolute;
-    width: 24px; height: 24px;
-    border-color: #c9a84c;
-    border-style: solid;
+    width: 20px; height: 20px;
+    border-color: rgba(201,168,76,0.6); border-style: solid;
 }
-.fc-tl { top:-4px; left:-4px; border-width:2px 0 0 2px; }
-.fc-tr { top:-4px; right:-4px; border-width:2px 2px 0 0; }
-.fc-bl { bottom:-4px; left:-4px; border-width:0 0 2px 2px; }
-.fc-br { bottom:-4px; right:-4px; border-width:0 2px 2px 0; }
-.frame-petal {
-    position: absolute;
-    font-size: 14px;
-    filter: drop-shadow(0 0 4px rgba(255,160,180,0.3));
-    pointer-events: none;
-    opacity: 0.5;
-}
-.fp-tl { top:-10px; left:-10px; transform:rotate(-30deg); }
-.fp-tr { top:-10px; right:-10px; transform:rotate(30deg); }
-.fp-bl { bottom:-10px; left:-10px; transform:rotate(-150deg); }
-.fp-br { bottom:-10px; right:-10px; transform:rotate(150deg); }
+.ifc-tl { top:-3px; left:-3px; border-width:1px 0 0 1px; }
+.ifc-tr { top:-3px; right:-3px; border-width:1px 1px 0 0; }
+.ifc-bl { bottom:-3px; left:-3px; border-width:0 0 1px 1px; }
+.ifc-br { bottom:-3px; right:-3px; border-width:0 1px 1px 0; }
 
 /* ── GALLERY ── */
-.gallery-row {
-    display: flex; gap: 8px;
+.inv-gallery {
+    display: flex; gap: 6px;
     justify-content: center;
-    margin: 0 0 28px;
-    padding: 0 20px;
+    margin: 0 24px 32px;
 }
-.gallery-row img {
-    width: calc(33.33% - 6px);
-    height: 115px;
+.inv-gallery img {
+    flex: 1; height: 110px;
     object-fit: cover;
-    border: 1px solid rgba(201,168,76,0.3);
-    transition: border-color 0.3s, transform 0.3s;
+    border: 1px solid rgba(201,168,76,0.2);
+    filter: sepia(0.08) brightness(0.95);
+    transition: border-color 0.3s;
 }
-.gallery-row img:hover { border-color:#c9a84c; transform:scale(1.03); }
+.inv-gallery img:hover { border-color: rgba(201,168,76,0.5); }
 
 /* ── COUPLE NAME ── */
-.undangan-label {
-    font-size: 10px; letter-spacing: 6px;
-    text-transform: uppercase; color:#c9a84c; opacity:0.55; margin-bottom:8px;
+.inv-couple-wrap {
+    text-align: center;
+    padding: 0 28px 8px;
+    position: relative; z-index: 1;
 }
-.couple-script {
-    font-family:'Great Vibes',cursive !important;
-    font-size:62px !important; color:#c9a84c !important;
-    line-height:1.05;
-    text-shadow: 0 0 40px rgba(201,168,76,0.3), 0 0 80px rgba(255,160,180,0.1);
+.inv-tag {
+    font-size: 9px; letter-spacing: 5px;
+    text-transform: uppercase; color: #c9a84c; opacity: 0.4;
+    margin-bottom: 12px; display: block;
 }
-.ampersand-script {
-    font-family:'Great Vibes',cursive !important;
-    font-size:38px !important; color:#8b1c2e !important;
-    display:block; margin:-6px 0;
+.inv-name {
+    font-family: 'Playfair Display', serif !important;
+    font-size: 52px !important;
+    font-weight: 700 !important;
+    color: #c9a84c !important;
+    line-height: 1.1;
+    letter-spacing: 1px;
 }
-.date-sub {
-    font-size:11px; letter-spacing:3px; color:#c9a84c;
-    opacity:0.45; margin-top:12px; text-transform:uppercase;
+.inv-amp {
+    display: block;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 28px !important;
+    font-style: italic !important;
+    color: rgba(201,168,76,0.4) !important;
+    letter-spacing: 4px;
+    margin: 4px 0;
+}
+.inv-date-tag {
+    font-size: 10px; letter-spacing: 4px;
+    color: #c9a84c; opacity: 0.35;
+    text-transform: uppercase; margin-top: 14px;
 }
 
-/* ── GOLD DIVIDER ── */
-.gold-divider {
-    display:flex; align-items:center; gap:10px;
-    margin:22px auto; max-width:320px; padding:0 24px;
+/* ── DIVIDER ── */
+.inv-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 28px auto;
+    max-width: 300px; padding: 0 28px;
+    position: relative; z-index: 1;
 }
-.gd-line { flex:1; height:1px; background:linear-gradient(to right,transparent,#c9a84c,transparent); opacity:0.4; }
-.gd-petal { font-size:12px; filter:drop-shadow(0 0 4px rgba(255,160,180,0.3)); opacity:0.4; }
-.gd-diamond { width:4px;height:4px;background:#c9a84c;transform:rotate(45deg);flex-shrink:0; opacity:0.4; }
+.inv-divider-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(201,168,76,0.3), transparent);
+}
+.inv-divider-mark {
+    width: 4px; height: 4px;
+    background: rgba(201,168,76,0.3);
+    transform: rotate(45deg); flex-shrink: 0;
+}
 
-/* ── SECTION CARD ── */
-.s-card {
-    margin:0 20px 20px;
-    border:1px solid rgba(201,168,76,0.12);
-    padding:28px 24px;
-    position:relative;
-    background:rgba(139,28,46,0.03);
-    z-index: 1;
-    backdrop-filter: blur(2px);
+/* ── CARD ── */
+.inv-card {
+    margin: 0 24px 16px;
+    padding: 28px 26px;
+    border-top: 1px solid rgba(201,168,76,0.12);
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+    position: relative; z-index: 1;
 }
-.s-card-top::before {
-    content:''; position:absolute;
-    top:-1px; left:16px; right:16px; height:1px;
-    background:linear-gradient(to right,transparent,#c9a84c,transparent);
-    opacity:0.4;
+.inv-card-label {
+    font-size: 9px; letter-spacing: 4px;
+    text-transform: uppercase; color: #c9a84c;
+    opacity: 0.4; text-align: center; margin-bottom: 16px;
 }
-.s-card::after {
-    content:''; position:absolute;
-    bottom:-1px; left:16px; right:16px; height:1px;
-    background:linear-gradient(to right,transparent,#c9a84c,transparent);
-    opacity:0.4;
+.inv-body {
+    font-size: 13.5px; line-height: 2.2;
+    text-align: center; color: #ddc9a8 !important;
+    opacity: 0.85;
 }
-.s-label {
-    font-size:9px; letter-spacing:4px; text-transform:uppercase;
-    color:#c9a84c; opacity:0.5; margin-bottom:14px; text-align:center;
-}
-.intro-p { font-size:13.5px; line-height:2.1; text-align:center; color:#e8d5c0 !important; opacity:0.85; }
 
 /* ── MEMPELAI ── */
-.mempelai-name {
-    font-family:'Great Vibes',cursive !important;
-    font-size:38px !important; color:#c9a84c !important;
-    text-align:center; display:block; line-height:1.15;
-    text-shadow:0 0 24px rgba(201,168,76,0.15);
+.inv-mempelai-name {
+    font-family: 'Playfair Display', serif !important;
+    font-size: 26px !important; font-weight: 600 !important;
+    color: #c9a84c !important;
+    text-align: center; display: block;
+    letter-spacing: 1px;
 }
-.mempelai-parents { font-size:12px; color:#c9a84c; opacity:0.55; font-style:italic; text-align:center; margin-top:4px; }
+.inv-mempelai-sub {
+    font-size: 12px; color: #c9a84c; opacity: 0.45;
+    font-style: italic; text-align: center; margin-top: 5px;
+}
+.inv-sep-amp {
+    text-align: center; margin: 12px 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-style: italic;
+    color: rgba(201,168,76,0.25);
+    letter-spacing: 4px;
+    position: relative; z-index: 1;
+}
 
 /* ── EVENTS ── */
-.events-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 20px 20px; z-index:1; position:relative; }
-.event-card {
-    border:1px solid rgba(201,168,76,0.2);
-    padding:22px 14px; text-align:center;
-    background:rgba(255,182,193,0.02);
-    position:relative; overflow:hidden;
+.inv-events {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin: 0 24px 16px; position: relative; z-index: 1;
 }
-.event-card::before {
-    content:'🌸';
-    position:absolute; top:6px; right:8px;
-    font-size:12px; opacity:0.15;
+.inv-event {
+    border: 1px solid rgba(201,168,76,0.15);
+    padding: 22px 12px; text-align: center;
 }
-.ev-type { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:#c9a84c; margin-bottom:10px; opacity:0.7; }
-.ev-day { font-family:'Playfair Display',serif !important; font-size:44px !important; font-weight:700 !important; color:#c9a84c !important; line-height:1; }
-.ev-monthyear { font-size:10px; letter-spacing:2px; color:#c9a84c; opacity:0.55; text-transform:uppercase; margin:4px 0 10px; }
-.ev-time { font-size:12px; color:#e8d5c0; opacity:0.7; margin-bottom:8px; }
-.ev-loc { font-size:11px; color:#c9a84c; opacity:0.5; line-height:1.6; font-style:italic; }
+.ev-lbl { font-size: 8px; letter-spacing: 3px; color: #c9a84c; opacity: 0.4; text-transform: uppercase; margin-bottom: 14px; }
+.ev-num {
+    font-family: 'Playfair Display', serif !important;
+    font-size: 52px !important; font-weight: 700 !important;
+    color: #c9a84c !important; line-height: 1;
+}
+.ev-my { font-size: 9px; letter-spacing: 2px; color: #c9a84c; opacity: 0.35; text-transform: uppercase; margin: 5px 0 10px; }
+.ev-tm { font-size: 12px; color: #ddc9a8; opacity: 0.6; margin-bottom: 6px; }
+.ev-loc { font-size: 11px; color: #c9a84c; opacity: 0.4; line-height: 1.7; font-style: italic; }
 
 /* ── COUNTDOWN ── */
-.countdown-wrap {
-    margin:0 20px 20px; padding:28px 20px;
-    border:1px solid rgba(201,168,76,0.1);
-    background:linear-gradient(135deg,rgba(139,28,46,0.05),rgba(255,182,193,0.02));
-    text-align:center; position:relative; overflow:hidden;
-    z-index: 1;
+.inv-countdown {
+    margin: 0 24px 16px;
+    padding: 30px 20px;
+    border: 1px solid rgba(201,168,76,0.1);
+    text-align: center;
+    position: relative; z-index: 1;
 }
-.countdown-wrap::before {
-    content:'🌸';
-    position:absolute; top:8px; left:50%; transform:translateX(-50%);
-    font-size:14px; opacity:0.1;
-}
-.cd-grid { display:flex; justify-content:center; gap:12px; margin-top:16px; }
-.cd-block { text-align:center; min-width:56px; }
+.cd-row { display: flex; justify-content: center; align-items: flex-start; gap: 8px; margin-top: 18px; }
+.cd-unit-wrap { text-align: center; min-width: 54px; }
 .cd-num {
-    font-family:'Playfair Display',serif !important;
-    font-size:40px !important; font-weight:700 !important; color:#c9a84c !important;
-    display:block; line-height:1;
-    text-shadow:0 0 24px rgba(201,168,76,0.2);
+    font-family: 'Playfair Display', serif !important;
+    font-size: 46px !important; font-weight: 700 !important;
+    color: #c9a84c !important; display: block; line-height: 1;
+    letter-spacing: -1px;
 }
-.cd-unit { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c9a84c; opacity:0.4; margin-top:5px; }
-.cd-sep { font-family:'Playfair Display',serif; font-size:32px; color:#c9a84c; opacity:0.25; align-self:flex-start; padding-top:6px; line-height:1; }
+.cd-lbl { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: #c9a84c; opacity: 0.3; margin-top: 6px; }
+.cd-colon {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px; color: rgba(201,168,76,0.2);
+    line-height: 1; padding-top: 5px; flex-shrink: 0;
+}
 
 /* ── LOCATION ── */
-.khit-card { margin:0 20px 20px; border:1px solid rgba(201,168,76,0.15); padding:24px; text-align:center; background:rgba(255,182,193,0.015); z-index:1; position:relative; }
-.khit-also { font-size:9px; letter-spacing:4px; color:#c9a84c; opacity:0.4; text-transform:uppercase; margin-bottom:8px; }
-.khit-title { font-family:'Great Vibes',cursive !important; font-size:36px !important; color:#c9a84c !important; margin-bottom:4px; }
+.inv-map-btn {
+    display: inline-block;
+    padding: 12px 36px;
+    border: 1px solid rgba(201,168,76,0.35);
+    color: #c9a84c !important;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+    text-decoration: none !important;
+    background: transparent;
+    transition: all 0.3s;
+    margin-top: 16px;
+}
+.inv-map-btn:hover { background: rgba(201,168,76,0.05); border-color: #c9a84c; }
 
-/* ── WISH ── */
-.wish-item { padding:12px 0; border-bottom:1px solid rgba(201,168,76,0.06); }
-.wish-name-label { font-size:12px; color:#c9a84c; font-weight:600; margin-bottom:4px; opacity:0.8; }
-.wish-body { font-size:13px; color:#e8d5c0; opacity:0.75; font-style:italic; line-height:1.7; }
-.wish-time { font-size:10px; color:#c9a84c; opacity:0.3; margin-top:4px; }
+/* ── WISHES ── */
+.wish-item {
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(201,168,76,0.06);
+}
+.wish-author { font-size: 12px; color: #c9a84c; opacity: 0.7; font-weight: 600; margin-bottom: 5px; }
+.wish-text { font-size: 13px; color: #ddc9a8; opacity: 0.7; font-style: italic; line-height: 1.8; }
+.wish-ts { font-size: 9px; color: #c9a84c; opacity: 0.25; margin-top: 5px; letter-spacing: 1px; }
 
 /* ── FOOTER ── */
-.footer-wrap { text-align:center; padding:32px 24px 56px; border-top:1px solid rgba(201,168,76,0.08); position:relative; z-index:1; }
-.footer-names { font-family:'Great Vibes',cursive !important; font-size:34px !important; color:#c9a84c !important; margin-bottom:8px; }
-.footer-sub { font-size:10px; letter-spacing:3px; color:#c9a84c; opacity:0.35; text-transform:uppercase; margin-bottom:12px; }
-.wassalam { font-size:11px; color:#c9a84c; opacity:0.25; font-style:italic; }
+.inv-footer {
+    text-align: center;
+    padding: 36px 28px 60px;
+    border-top: 1px solid rgba(201,168,76,0.07);
+    position: relative; z-index: 1;
+}
+.inv-footer-names {
+    font-family: 'Playfair Display', serif !important;
+    font-size: 28px !important; font-weight: 600 !important;
+    color: rgba(201,168,76,0.7) !important;
+    letter-spacing: 2px; margin-bottom: 8px;
+}
+.inv-footer-sub { font-size: 9px; letter-spacing: 4px; color: #c9a84c; opacity: 0.25; text-transform: uppercase; }
+.inv-wassalam { font-size: 11px; color: #c9a84c; opacity: 0.2; font-style: italic; margin-top: 16px; }
 
 /* ── STREAMLIT OVERRIDES ── */
-hr { border-color:rgba(201,168,76,0.08) !important; }
 .stButton > button {
-    background:transparent !important; border:1px solid rgba(201,168,76,0.4) !important;
-    color:#c9a84c !important; font-family:'Cormorant Garamond',serif !important;
-    font-size:11px !important; letter-spacing:3px !important; text-transform:uppercase !important;
-    padding:10px 20px !important; border-radius:0 !important; width:100%;
+    background: transparent !important;
+    border: 1px solid rgba(201,168,76,0.3) !important;
+    color: #c9a84c !important;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 11px !important; letter-spacing: 4px !important;
+    text-transform: uppercase !important;
+    padding: 11px 24px !important; border-radius: 0 !important;
+    width: 100%;
 }
-.stButton > button:hover { background:rgba(201,168,76,0.1) !important; border-color:#c9a84c !important; }
+.stButton > button:hover {
+    background: rgba(201,168,76,0.05) !important;
+    border-color: #c9a84c !important;
+}
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea {
-    background:rgba(255,255,255,0.02) !important; border:1px solid rgba(201,168,76,0.2) !important;
-    border-radius:0 !important; color:#f5e6d3 !important;
-    font-family:'Cormorant Garamond',serif !important; font-size:14px !important;
+    background: rgba(255,255,255,0.015) !important;
+    border: 1px solid rgba(201,168,76,0.15) !important;
+    border-radius: 0 !important;
+    color: #e8d5b7 !important;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 14px !important;
 }
 .stTextInput > div > div > input:focus,
-.stTextArea > div > div > textarea:focus { border-color:#c9a84c !important; box-shadow:none !important; }
+.stTextArea > div > div > textarea:focus {
+    border-color: rgba(201,168,76,0.4) !important;
+    box-shadow: none !important;
+}
 .stTextInput label, .stTextArea label, .stRadio label {
-    color:#c9a84c !important; font-family:'Cormorant Garamond',serif !important;
-    font-size:11px !important; letter-spacing:2px !important; text-transform:uppercase !important; opacity:0.6 !important;
+    color: #c9a84c !important;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 10px !important; letter-spacing: 3px !important;
+    text-transform: uppercase !important; opacity: 0.45 !important;
 }
 .stRadio > div > label {
-    color:#c9a84c !important; font-size:13px !important; letter-spacing:1px !important; text-transform:none !important;
-    background:rgba(201,168,76,0.03) !important; border:1px solid rgba(201,168,76,0.15) !important;
-    padding:8px 16px !important; border-radius:0 !important;
+    color: #c9a84c !important; font-size: 13px !important;
+    letter-spacing: 1px !important; text-transform: none !important;
+    background: transparent !important;
+    border: 1px solid rgba(201,168,76,0.15) !important;
+    padding: 8px 18px !important; border-radius: 0 !important;
 }
-.stSuccess, .stInfo { background:rgba(139,28,46,0.15) !important; border:1px solid rgba(201,168,76,0.2) !important; border-radius:0 !important; color:#c9a84c !important; }
+.stTabs [data-baseweb="tab-list"] {
+    background: transparent !important; gap: 4px;
+}
+.stTabs [data-baseweb="tab"] {
+    background: transparent !important;
+    border: 1px solid rgba(201,168,76,0.15) !important;
+    color: #c9a84c !important;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 11px !important; letter-spacing: 2px !important;
+    text-transform: uppercase !important; border-radius: 0 !important;
+}
+.stTabs [aria-selected="true"] {
+    border-color: rgba(201,168,76,0.4) !important;
+    background: rgba(201,168,76,0.04) !important;
+}
+.stSuccess, .stInfo, .stWarning {
+    background: rgba(20,14,8,0.8) !important;
+    border: 1px solid rgba(201,168,76,0.2) !important;
+    border-radius: 0 !important;
+    color: #c9a84c !important;
+}
+hr { border-color: rgba(201,168,76,0.07) !important; }
 </style>
 
-<!-- ══ SAKURA BACKGROUND ══ -->
-<div id="sakura-bg">
-    <div class="sakura-petal-bg">🌸</div>
-    <div class="sakura-petal-bg">🌸</div>
-    <div class="sakura-petal-bg">🌸</div>
-    <div class="sakura-petal-bg">🌸</div>
-    <div class="sakura-petal-bg">🌸</div>
-    <div class="sakura-petal-bg">🌸</div>
-    <div class="sakura-petal-bg">🌸</div>
-    <div class="sakura-petal-bg">🌸</div>
-</div>
-<div id="glow-overlay"></div>
+<!-- ══ TEXTURE ══ -->
+<div id="texture-overlay"></div>
 
-<!-- ══ MUSIK OTOMATIS ══ -->
-<audio id="bg-audio" loop autoplay preload="auto">
+<!-- ══ MUSIC ══ -->
+<div id="music-label">♫ Janji Suci — Yovie &amp; Nuno</div>
+<button id="music-btn" title="Musik">♫</button>
 """, unsafe_allow_html=True)
 
-# Gunakan file MP3 lokal jika ada
-if music_exists:
-    with open(music_file, "rb") as f:
-        audio_data = base64.b64encode(f.read()).decode()
+# ── Audio element ──
+if audio_b64:
     st.markdown(f"""
-    <source src="data:audio/mpeg;base64,{audio_data}" type="audio/mpeg">
-    """, unsafe_allow_html=True)
+    <audio id="bg-audio" loop preload="auto">
+        <source src="data:audio/mpeg;base64,{audio_b64}" type="audio/mpeg">
+    </audio>""", unsafe_allow_html=True)
 else:
     st.markdown("""
-    <source src="https://ia800905.us.archive.org/19/items/FREE_background_music_dac/07_-_Music_Box.mp3" type="audio/mpeg">
-    """, unsafe_allow_html=True)
-
-st.markdown("""
-</audio>
-
-<script>
-// ============================================================
-// SAKURA BACKGROUND
-// ============================================================
-(function(){
-    var petals = document.querySelectorAll('.sakura-petal-bg');
-    petals.forEach(function(petal) {
-        var duration = 18 + Math.random() * 10;
-        var delay = Math.random() * 15;
-        var startX = Math.random() * 90 + 5;
-        var size = 18 + Math.random() * 20;
-        petal.style.left = startX + '%';
-        petal.style.fontSize = size + 'px';
-        petal.style.animationDuration = duration + 's';
-        petal.style.animationDelay = delay + 's';
-        petal.style.opacity = 0.04 + Math.random() * 0.08;
-    });
-})();
-
-// ============================================================
-// COUNTDOWN - PASTI BERJALAN!
-// ============================================================
-(function(){
-    function pad(n) {
-        return String(n).padStart(2, '0');
-    }
-    
-    function updateCountdown() {
-        try {
-            var target = new Date('2026-07-19T10:00:00+07:00').getTime();
-            var now = Date.now();
-            var diff = Math.max(0, target - now);
-            
-            var days = Math.floor(diff / 86400000);
-            var hours = Math.floor((diff % 86400000) / 3600000);
-            var minutes = Math.floor((diff % 3600000) / 60000);
-            var seconds = Math.floor((diff % 60000) / 1000);
-            
-            var elements = {
-                'cd-days': days,
-                'cd-hours': hours,
-                'cd-mins': minutes,
-                'cd-secs': seconds
-            };
-            
-            for (var id in elements) {
-                var el = document.getElementById(id);
-                if (el) {
-                    el.textContent = pad(elements[id]);
-                }
-            }
-        } catch(e) {
-            console.log('Countdown error:', e);
-        }
-    }
-    
-    // Jalankan segera
-    updateCountdown();
-    // Jalankan setiap detik
-    setInterval(updateCountdown, 1000);
-})();
-
-// ============================================================
-// MUSIK - OTOMATIS PUTAR
-// ============================================================
-(function(){
-    var audio = document.getElementById('bg-audio');
-    if (!audio) return;
-    
-    audio.volume = 0.7;
-    
-    // Coba putar musik otomatis
-    var playPromise = audio.play();
-    if (playPromise !== undefined) {
-        playPromise.then(function() {
-            console.log('Musik berjalan otomatis!');
-        }).catch(function(error) {
-            console.log('Auto-play diblokir browser. Klik halaman untuk memutar.');
-            // Jika auto-play diblokir, putar saat user klik di mana saja
-            document.addEventListener('click', function playOnClick() {
-                audio.play().then(function() {
-                    console.log('Musik berjalan setelah klik!');
-                    document.removeEventListener('click', playOnClick);
-                }).catch(function(e) {
-                    console.log('Gagal memutar musik:', e);
-                });
-            }, { once: true });
-        });
-    }
-    
-    // Loop musik
-    audio.addEventListener('ended', function() {
-        audio.currentTime = 0;
-        audio.play();
-    });
-})();
-</script>
-""", unsafe_allow_html=True)
-
-
-# ── HELPERS ──────────────────────────────────────────────────
-def gold_divider():
-    st.markdown("""
-    <div class="gold-divider">
-        <div class="gd-line"></div>
-        <div class="gd-petal">🌸</div>
-        <div class="gd-diamond"></div>
-        <div class="gd-petal">🌸</div>
-        <div class="gd-line"></div>
-    </div>""", unsafe_allow_html=True)
-
+    <audio id="bg-audio" loop preload="auto">
+        <source src="https://ia800905.us.archive.org/19/items/FREE_background_music_dac/07_-_Music_Box.mp3" type="audio/mpeg">
+    </audio>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-#  CONTENT
+#  HERO
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="hero-wrap">
-    <div class="bismillah-text">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
-    <div class="sakura-branch">🌸 🌿 🌸</div>
-    <div class="salam-text">Assalamu'alaikum Warahmatullahi Wabarakatuh</div>
+<div class="inv-hero">
+    <div class="inv-bismillah">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+    <div class="inv-ornament">— ✦ —</div>
+    <div class="inv-salam">Assalamu'alaikum Warahmatullahi Wabarakatuh</div>
 </div>
 """, unsafe_allow_html=True)
 
-# ── Foto Utama ──
+# ── Foto utama ──
 if photos.get("foto1"):
     st.markdown(f"""
-    <div style="padding:0 20px;margin-bottom:14px">
-        <div class="frame-outer">
-            <div class="frame-corner fc-tl"></div><div class="frame-corner fc-tr"></div>
-            <div class="frame-corner fc-bl"></div><div class="frame-corner fc-br"></div>
-            <span class="frame-petal fp-tl">🌸</span>
-            <span class="frame-petal fp-tr">🌸</span>
-            <span class="frame-petal fp-bl">🌸</span>
-            <span class="frame-petal fp-br">🌸</span>
+    <div style="padding:0 24px;margin-bottom:12px;position:relative;z-index:1">
+        <div class="inv-frame-wrap">
+            <div class="inv-frame-corner ifc-tl"></div>
+            <div class="inv-frame-corner ifc-tr"></div>
+            <div class="inv-frame-corner ifc-bl"></div>
+            <div class="inv-frame-corner ifc-br"></div>
             <img src="data:image/png;base64,{photos['foto1']}" alt="Foto Mempelai"/>
         </div>
     </div>""", unsafe_allow_html=True)
@@ -524,36 +470,45 @@ if photos.get("foto1"):
 # ── Gallery ──
 if photos.get("foto2") and photos.get("foto3"):
     st.markdown(f"""
-    <div class="gallery-row">
-        <img src="data:image/png;base64,{photos['foto1']}" alt="foto 1"/>
-        <img src="data:image/png;base64,{photos['foto2']}" alt="foto 2"/>
-        <img src="data:image/png;base64,{photos['foto3']}" alt="foto 3"/>
+    <div class="inv-gallery">
+        <img src="data:image/png;base64,{photos['foto1']}" alt=""/>
+        <img src="data:image/png;base64,{photos['foto2']}" alt=""/>
+        <img src="data:image/png;base64,{photos['foto3']}" alt=""/>
     </div>""", unsafe_allow_html=True)
 
 # ── Nama Mempelai ──
 st.markdown("""
-<div style="text-align:center;padding:0 24px 4px">
-    <div class="undangan-label">🌸 Undangan Pernikahan 🌸</div>
-    <div class="couple-script">Intan</div>
-    <div class="ampersand-script">&</div>
-    <div class="couple-script">Syahrial</div>
-    <div class="date-sub">19 Juli 2026 · Desa Namo Bintang</div>
+<div class="inv-couple-wrap">
+    <span class="inv-tag">✦ Undangan Pernikahan ✦</span>
+    <div class="inv-name">Intan</div>
+    <div class="inv-amp">&amp;</div>
+    <div class="inv-name">Syahrial</div>
+    <div class="inv-date-tag">19 · Juli · 2026 &nbsp;·&nbsp; Desa Namo Bintang</div>
 </div>
 """, unsafe_allow_html=True)
 
-gold_divider()
+# ── DIVIDER ──
+def divider():
+    st.markdown("""
+    <div class="inv-divider" style="position:relative;z-index:1">
+        <div class="inv-divider-line"></div>
+        <div class="inv-divider-mark"></div>
+        <div class="inv-divider-line"></div>
+    </div>""", unsafe_allow_html=True)
+
+divider()
 
 # ══════════════════════════════════════════════════════════════
 #  PEMBUKA
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="s-card s-card-top" style="margin:0 20px 20px">
-    <div class="s-label">— 🌸 Dengan Rahmat Allah Subhanahu Wa Ta'ala 🌸 —</div>
-    <p class="intro-p">
+<div class="inv-card">
+    <div class="inv-card-label">— Dengan Rahmat Allah Subhanahu Wa Ta'ala —</div>
+    <p class="inv-body">
         Maha Suci Allah yang telah menciptakan makhluk-Nya berpasang-pasangan.<br><br>
-        Ya Allah, perkenankanlah kami menikahkan putra-putri kami untuk mengikuti
-        Sunnah Rasul-Mu, melakukan Syariat Agama-Mu dalam rangka membentuk keluarga
-        yang Sakinah, Mawaddah, Warahmah. Maka izinkanlah kami menikahkannya.
+        Dengan memohon Ridha dan Rahmat-Nya, kami bermaksud menyelenggarakan
+        pernikahan putra-putri kami. Maka dengan segala kerendahan hati,
+        kami mengundang Bapak / Ibu / Saudara/i untuk hadir memberikan do'a restu.
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -562,163 +517,272 @@ st.markdown("""
 #  MEMPELAI
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="s-card" style="margin:0 20px 8px">
-    <div class="s-label">— Mempelai Wanita —</div>
-    <span class="mempelai-name">Intan Candra Nurul Hafizah</span>
-    <div class="mempelai-parents">Putri dari Alm. Bapak Fadli &amp; Ibu Sri Sumarti (Wiwik)</div>
+<div class="inv-card">
+    <div class="inv-card-label">— Mempelai Wanita —</div>
+    <span class="inv-mempelai-name">Intan Candra Nurul Hafizah</span>
+    <div class="inv-mempelai-sub">Putri dari Alm. Bapak Fadli &amp; Ibu Sri Sumarti (Wiwik)</div>
 </div>
-<div style="text-align:center;margin:10px 0;font-size:24px;filter:drop-shadow(0 0 6px rgba(255,160,180,0.2));opacity:0.5">🌸</div>
-<div style="text-align:center;margin:-4px 0 10px">
-    <span style="font-family:'Great Vibes',cursive;font-size:42px;color:#8b1c2e;opacity:0.7">&amp;</span>
-</div>
-<div class="s-card" style="margin:0 20px 24px">
-    <div class="s-label">— Mempelai Pria —</div>
-    <span class="mempelai-name">Syahrial / Gombeng</span>
-    <div class="mempelai-parents">Putra dari Alm. Bapak Paimo &amp; Ibu Suriani</div>
+<div class="inv-sep-amp">—&nbsp;&amp;&nbsp;—</div>
+<div class="inv-card" style="margin-top:0">
+    <div class="inv-card-label">— Mempelai Pria —</div>
+    <span class="inv-mempelai-name">Syahrial</span>
+    <div class="inv-mempelai-sub">Putra dari Alm. Bapak Paimo &amp; Ibu Suriani</div>
 </div>
 """, unsafe_allow_html=True)
+
+divider()
 
 # ══════════════════════════════════════════════════════════════
 #  EVENTS
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="events-grid">
-    <div class="event-card">
-        <div class="ev-type">✦ Akad Nikah ✦</div>
-        <div class="ev-day">17</div>
-        <div class="ev-monthyear">Juli · 2026</div>
-        <div class="ev-time">Jum'at · 08.00 WIB</div>
+<div class="inv-events">
+    <div class="inv-event">
+        <div class="ev-lbl">Akad Nikah</div>
+        <div class="ev-num">17</div>
+        <div class="ev-my">Juli · 2026</div>
+        <div class="ev-tm">Jum'at · 08.00 WIB</div>
         <div class="ev-loc">Dusun II Sumberingin<br>Desa Namo Bintang</div>
     </div>
-    <div class="event-card">
-        <div class="ev-type">✦ Resepsi ✦</div>
-        <div class="ev-day">19</div>
-        <div class="ev-monthyear">Juli · 2026</div>
-        <div class="ev-time">Minggu · 10.00 WIB</div>
+    <div class="inv-event">
+        <div class="ev-lbl">Resepsi</div>
+        <div class="ev-num">19</div>
+        <div class="ev-my">Juli · 2026</div>
+        <div class="ev-tm">Minggu · 10.00 WIB</div>
         <div class="ev-loc">Dusun II Sumberingin<br>Desa Namo Bintang</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-#  COUNTDOWN
+#  COUNTDOWN — id unik, script inline langsung setelah elemen
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="countdown-wrap">
-    <div class="s-label">— Menghitung Hari Menuju Hari Bahagia —</div>
-    <div class="cd-grid">
-        <div class="cd-block"><span class="cd-num" id="cd-days">00</span><div class="cd-unit">Hari</div></div>
-        <div class="cd-sep">:</div>
-        <div class="cd-block"><span class="cd-num" id="cd-hours">00</span><div class="cd-unit">Jam</div></div>
-        <div class="cd-sep">:</div>
-        <div class="cd-block"><span class="cd-num" id="cd-mins">00</span><div class="cd-unit">Menit</div></div>
-        <div class="cd-sep">:</div>
-        <div class="cd-block"><span class="cd-num" id="cd-secs">00</span><div class="cd-unit">Detik</div></div>
+<div class="inv-countdown">
+    <div class="inv-card-label">— Menghitung Hari Menuju Hari Bahagia —</div>
+    <div class="cd-row">
+        <div class="cd-unit-wrap">
+            <span class="cd-num" id="inv-cd-d">--</span>
+            <div class="cd-lbl">Hari</div>
+        </div>
+        <div class="cd-colon">:</div>
+        <div class="cd-unit-wrap">
+            <span class="cd-num" id="inv-cd-h">--</span>
+            <div class="cd-lbl">Jam</div>
+        </div>
+        <div class="cd-colon">:</div>
+        <div class="cd-unit-wrap">
+            <span class="cd-num" id="inv-cd-m">--</span>
+            <div class="cd-lbl">Menit</div>
+        </div>
+        <div class="cd-colon">:</div>
+        <div class="cd-unit-wrap">
+            <span class="cd-num" id="inv-cd-s">--</span>
+            <div class="cd-lbl">Detik</div>
+        </div>
     </div>
 </div>
+
+<script>
+/* ── COUNTDOWN ─────────────────────────────────── */
+(function startCountdown() {
+    var ids = { d:'inv-cd-d', h:'inv-cd-h', m:'inv-cd-m', s:'inv-cd-s' };
+    var target = new Date('2026-07-19T10:00:00+07:00').getTime();
+
+    function pad(n){ return n < 10 ? '0'+n : ''+n; }
+
+    function tick() {
+        /* Cari elemen — jika belum ada, tunggu */
+        var elD = document.getElementById(ids.d);
+        if (!elD) { setTimeout(tick, 200); return; }
+
+        var now  = Date.now();
+        var diff = Math.max(0, target - now);
+
+        var days  = Math.floor(diff / 86400000);
+        var hours = Math.floor((diff % 86400000) / 3600000);
+        var mins  = Math.floor((diff % 3600000)  / 60000);
+        var secs  = Math.floor((diff % 60000)    / 1000);
+
+        document.getElementById(ids.d).textContent = pad(days);
+        document.getElementById(ids.h).textContent = pad(hours);
+        document.getElementById(ids.m).textContent = pad(mins);
+        document.getElementById(ids.s).textContent = pad(secs);
+    }
+
+    /* Coba segera; jika DOM belum siap, coba lagi */
+    tick();
+    setInterval(tick, 1000);
+})();
+
+/* ── MUSIC ─────────────────────────────────────── */
+(function initMusic() {
+    var audio    = document.getElementById('bg-audio');
+    var btn      = document.getElementById('music-btn');
+    var label    = document.getElementById('music-label');
+    if (!audio || !btn) { setTimeout(initMusic, 300); return; }
+
+    var playing  = false;
+    var labelTO  = null;
+
+    function showLabel(txt) {
+        label.textContent = txt;
+        label.classList.add('show');
+        clearTimeout(labelTO);
+        labelTO = setTimeout(function(){ label.classList.remove('show'); }, 3000);
+    }
+
+    function doPlay() {
+        audio.volume = 0.65;
+        var p = audio.play();
+        if (p) p.then(function(){
+            playing = true;
+            btn.textContent = '♫';
+            btn.classList.add('playing');
+            showLabel('♫ Janji Suci — Yovie & Nuno');
+        }).catch(function(){
+            btn.textContent = '♪';
+            btn.classList.remove('playing');
+            showLabel('Klik ♪ untuk memutar musik');
+        });
+    }
+
+    /* Autoplay setelah interaksi pertama user */
+    function onFirstInteract() {
+        if (!playing) doPlay();
+        document.removeEventListener('click',    onFirstInteract);
+        document.removeEventListener('scroll',   onFirstInteract);
+        document.removeEventListener('touchstart', onFirstInteract);
+    }
+    document.addEventListener('click',     onFirstInteract, { once: true });
+    document.addEventListener('scroll',    onFirstInteract, { once: true });
+    document.addEventListener('touchstart',onFirstInteract, { once: true });
+
+    /* Coba langsung (autoplay policy permissive) */
+    setTimeout(doPlay, 600);
+
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (playing) {
+            audio.pause();
+            playing = false;
+            btn.textContent = '♪';
+            btn.classList.remove('playing');
+            showLabel('⏸ Musik dijeda');
+        } else {
+            doPlay();
+        }
+    });
+})();
+</script>
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
 #  LOKASI
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="s-card" style="margin:0 20px 16px;text-align:center">
-    <div class="s-label">— Lokasi Acara —</div>
-    <div style="font-size:28px;margin:4px 0;filter:drop-shadow(0 0 8px rgba(255,160,180,0.15));opacity:0.4">📍</div>
-    <div style="font-family:'Playfair Display',serif;font-size:17px;color:#c9a84c;margin:10px 0 6px;letter-spacing:1px">
+<div class="inv-card" style="text-align:center;margin-top:4px">
+    <div class="inv-card-label">— Lokasi Acara —</div>
+    <div style="font-family:'Playfair Display',serif;font-size:18px;color:#c9a84c;letter-spacing:1px;margin:8px 0 5px">
         Dusun II Sumberingin
     </div>
-    <div style="font-size:12px;color:#e8d5c0;opacity:0.65;font-style:italic;line-height:2">
-        Desa Namo Bintang<br>
-        Minggu, 19 Juli 2026 · Pukul 10.00 WIB
+    <div style="font-size:12px;color:#ddc9a8;opacity:0.55;font-style:italic;line-height:2">
+        Desa Namo Bintang<br>Minggu, 19 Juli 2026 &nbsp;·&nbsp; Pukul 10.00 WIB
+    </div>
+    <div style="margin-top:18px">
+        <a class="inv-map-btn" href="https://maps.app.goo.gl/8G9hHHY9LzdGg5yc6" target="_blank">
+            Buka Google Maps
+        </a>
     </div>
 </div>
-<div style="text-align:center;margin:0 20px 24px">
-    <a href="https://maps.app.goo.gl/8G9hHHY9LzdGg5yc6" target="_blank"
-       style="display:inline-block;padding:14px 40px;
-              border:1px solid #c9a84c;
-              color:#c9a84c;font-family:'Cormorant Garamond',serif;
-              font-size:12px;letter-spacing:4px;text-transform:uppercase;
-              text-decoration:none;background:rgba(201,168,76,0.04);
-              transition:all 0.3s">
-        🗺️ &nbsp; Buka Google Maps
-    </a>
-</div>
 """, unsafe_allow_html=True)
+
+divider()
 
 # ══════════════════════════════════════════════════════════════
 #  KHITANAN
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="khit-card">
-    <div class="khit-also">— Serta Khitanan —</div>
-    <div style="font-size:18px;margin:4px 0;opacity:0.2">🌸</div>
-    <div class="khit-title">Ahmad Hanafi</div>
+<div style="text-align:center;margin:0 24px 4px;position:relative;z-index:1">
+    <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c;opacity:0.35;margin-bottom:10px">
+        Serta Turut Mengundang Acara Khitanan
+    </div>
+    <div style="font-family:'Playfair Display',serif;font-size:22px;color:#c9a84c;opacity:0.7;letter-spacing:1px">
+        Ahmad Hanafi
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-gold_divider()
+divider()
 
 # ══════════════════════════════════════════════════════════════
 #  TURUT MENGUNDANG
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="s-card s-card-top" style="margin:0 20px 4px">
-    <div class="s-label">— 🌸 Turut Mengundang 🌸 —</div>
+<div class="inv-card">
+    <div class="inv-card-label">— Turut Mengundang —</div>
 </div>
 """, unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["🌸 Pihak Wanita", "🎩 Pihak Pria"])
+tab1, tab2 = st.tabs(["Pihak Wanita", "Pihak Pria"])
+
+def list_html(items):
+    rows = "".join([
+        f'<li style="font-size:13px;color:#ddc9a8;opacity:0.65;padding:8px 0;border-bottom:1px solid rgba(201,168,76,0.05);line-height:1.6">{i}</li>'
+        for i in items
+    ])
+    return f'<ul style="list-style:none;padding:4px 0 0">{rows}</ul>'
 
 with tab1:
     wanita = [
-        "Alm. Mandah / Ngatiyem (Kakek & Nenek)",
-        "Muri / Anik (Kakek & Nenek)", "Dasem (Nenek)",
-        "Sukar / Iyet (Kakek & Nenek)", "Ribut / Ngatisah (Kakek & Nenek)",
-        "Alm. Jarno / Muriatik (Kakek & Nenek)", "Sawon (Kakek)", "Karlan (Kakek)",
-        "Watik / Misjo (Wawak)", "Gambreng / Tumik (Pakde & Bude)",
-        "Endang Susanti / Ust. Lukman S.Pd.I (Bibik & Oom)",
-        "Sri Wulan Handayani / Hendrik (Bibik & Oom)",
-        "Ema (Adik)", "Ahamad Hanafi (Adik)",
+        "Alm. Mandah / Ngatiyem — Kakek & Nenek",
+        "Muri / Anik — Kakek & Nenek", "Dasem — Nenek",
+        "Sukar / Iyet — Kakek & Nenek", "Ribut / Ngatisah — Kakek & Nenek",
+        "Alm. Jarno / Muriatik — Kakek & Nenek", "Sawon — Kakek", "Karlan — Kakek",
+        "Watik / Misjo — Wawak", "Gambreng / Tumik — Pakde & Bude",
+        "Endang Susanti / Ust. Lukman S.Pd.I — Bibik & Oom",
+        "Sri Wulan Handayani / Hendrik — Bibik & Oom",
+        "Ema — Adik", "Ahmad Hanafi — Adik",
     ]
-    html = "".join([f'<li style="font-size:13px;color:#e8d5c0;opacity:0.7;padding:7px 0;border-bottom:1px solid rgba(255,182,193,0.05);line-height:1.5">🌸 {i}</li>' for i in wanita])
-    st.markdown(f'<ul style="list-style:none;padding:12px 0 4px">{html}</ul>', unsafe_allow_html=True)
+    st.markdown(list_html(wanita), unsafe_allow_html=True)
 
 with tab2:
     pria = [
-        "Marinem / Suparto (Nenek & Kakek)", "Ngatiyem / Alm. Joni (Nenek & Kakek)",
-        "Alm. Paiko / Iyus (Wawak)", "Dedi / Rika (Abang)", "Yuda / Wulan (Abang)",
-        "Diki / Dina (Adik)", "Igo Ardiansyah (Adik)", "Sugik / Yanti (Lelek)",
-        "Minok / Susi (Lelek)", "Rame / Santo (Bibik)", "Yuni / Junedi (Bibik)",
+        "Marinem / Suparto — Nenek & Kakek",
+        "Ngatiyem / Alm. Joni — Nenek & Kakek",
+        "Alm. Paiko / Iyus — Wawak",
+        "Dedi / Rika — Abang", "Yuda / Wulan — Abang",
+        "Diki / Dina — Adik", "Igo Ardiansyah — Adik",
+        "Sugik / Yanti — Lelek", "Minok / Susi — Lelek",
+        "Rame / Santo — Bibik", "Yuni / Junedi — Bibik",
     ]
-    html2 = "".join([f'<li style="font-size:13px;color:#e8d5c0;opacity:0.7;padding:7px 0;border-bottom:1px solid rgba(255,182,193,0.05);line-height:1.5">🌸 {i}</li>' for i in pria])
-    st.markdown(f'<ul style="list-style:none;padding:12px 0 4px">{html2}</ul>', unsafe_allow_html=True)
+    st.markdown(list_html(pria), unsafe_allow_html=True)
 
-gold_divider()
+divider()
 
 # ══════════════════════════════════════════════════════════════
 #  RSVP
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="s-card s-card-top" style="margin:0 20px 0">
-    <div class="s-label">— Konfirmasi Kehadiran —</div>
-    <p class="intro-p" style="font-size:12px;margin-bottom:0">
-        Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila<br>
-        Bapak / Ibu / Saudara/i berkenan hadir memberikan Do'a Restu.
+<div class="inv-card">
+    <div class="inv-card-label">— Konfirmasi Kehadiran —</div>
+    <p class="inv-body" style="font-size:12px;margin-bottom:0">
+        Merupakan suatu kehormatan apabila Bapak / Ibu / Saudara/i
+        berkenan hadir memberikan do'a restu.
     </p>
 </div>
 """, unsafe_allow_html=True)
 
 with st.container():
-    st.markdown('<div style="padding:0 20px 20px">', unsafe_allow_html=True)
-    rsvp_name = st.text_input("", placeholder="Nama Anda...", key="rsvp_name", label_visibility="collapsed")
-    rsvp_status = st.radio("", ["🌸 Hadir", "✦ Tidak Hadir"], horizontal=True, key="rsvp_status", label_visibility="collapsed")
+    st.markdown('<div style="padding:0 24px 20px">', unsafe_allow_html=True)
+    rsvp_name   = st.text_input("", placeholder="Nama Anda", key="rsvp_name", label_visibility="collapsed")
+    rsvp_status = st.radio("", ["Hadir", "Tidak Hadir"], horizontal=True, key="rsvp_status", label_visibility="collapsed")
     if st.button("Kirim Konfirmasi", key="submit_rsvp"):
         if rsvp_name.strip():
-            if "Hadir" in rsvp_status and "Tidak" not in rsvp_status:
-                st.success(f"🌸 Terima kasih, {rsvp_name}! Kami menantikan kehadiran Anda.")
+            if rsvp_status == "Hadir":
+                st.success(f"Terima kasih, {rsvp_name}. Kami menantikan kehadiran Anda.")
             else:
-                st.info(f"✦ Terima kasih, {rsvp_name}. Semoga selalu dalam lindungan Allah.")
+                st.info(f"Terima kasih, {rsvp_name}. Semoga selalu dalam lindungan Allah.")
         else:
             st.warning("Mohon isi nama Anda terlebih dahulu.")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -727,41 +791,44 @@ with st.container():
 #  DO'A & UCAPAN
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="s-card s-card-top" style="margin:0 20px 0">
-    <div class="s-label">— 🌸 Do'a &amp; Ucapan 🌸 —</div>
+<div class="inv-card" style="margin-top:8px">
+    <div class="inv-card-label">— Do'a &amp; Ucapan —</div>
 </div>
 """, unsafe_allow_html=True)
 
 for w in st.session_state.wishes:
     st.markdown(f"""
-    <div class="wish-item" style="padding:12px 20px">
-        <div class="wish-name-label">🌸 {w['name']}</div>
-        <div class="wish-body">{w['text']}</div>
-        <div class="wish-time">{w['time']}</div>
+    <div class="wish-item" style="padding:14px 24px">
+        <div class="wish-author">{w['name']}</div>
+        <div class="wish-text">{w['text']}</div>
+        <div class="wish-ts">{w['time']}</div>
     </div>""", unsafe_allow_html=True)
 
 with st.container():
-    st.markdown('<div style="padding:12px 20px 20px">', unsafe_allow_html=True)
-    wish_name = st.text_input("", placeholder="Nama Anda...", key="wish_name", label_visibility="collapsed")
+    st.markdown('<div style="padding:12px 24px 20px">', unsafe_allow_html=True)
+    wish_name = st.text_input("", placeholder="Nama Anda", key="wish_name", label_visibility="collapsed")
     wish_text = st.text_area("", placeholder="Tulis do'a dan ucapan untuk kedua mempelai...", key="wish_text", label_visibility="collapsed", height=100)
-    if st.button("Kirim Ucapan 🌸", key="submit_wish"):
+    if st.button("Kirim Ucapan", key="submit_wish"):
         if wish_name.strip() and wish_text.strip():
-            st.session_state.wishes.insert(0, {"name": wish_name.strip(), "text": wish_text.strip(), "time": "Baru saja"})
+            st.session_state.wishes.insert(0, {
+                "name": wish_name.strip(),
+                "text": wish_text.strip(),
+                "time": "Baru saja"
+            })
             st.rerun()
         else:
             st.warning("Mohon isi nama dan ucapan Anda.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-gold_divider()
+divider()
 
 # ══════════════════════════════════════════════════════════════
 #  AYAT
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="s-card" style="margin:0 20px 20px">
-    <div class="s-label">— QS. Ar-Rum: 21 —</div>
-    <div style="font-size:20px;text-align:center;margin-bottom:12px;filter:drop-shadow(0 0 6px rgba(255,160,180,0.15));opacity:0.4">🌸 🌿 🌸</div>
-    <p style="font-size:13px;line-height:2.2;text-align:center;color:#e8d5c0;opacity:0.75;font-style:italic">
+<div class="inv-card">
+    <div class="inv-card-label">— QS. Ar-Rum: 21 —</div>
+    <p class="inv-body" style="font-style:italic">
         "Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu
         istri-istri dari jenismu sendiri, supaya kamu cenderung dan merasa tenteram
         kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang."
@@ -773,16 +840,16 @@ st.markdown("""
 #  FOOTER
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="footer-wrap">
-    <div style="font-size:24px;margin-bottom:16px;filter:drop-shadow(0 0 8px rgba(255,160,180,0.15));opacity:0.3">🌸 🌿 🌸</div>
-    <div class="footer-names">Intan &amp; Syahrial</div>
-    <div class="footer-sub">19 Juli 2026 · Namo Bintang</div>
-    <div style="font-size:14px;color:#c9a84c;opacity:0.15;margin:12px 0;letter-spacing:8px">✦ ✦ ✦</div>
-    <div class="wassalam">Wassalamu'alaikum Warahmatullahi Wabarakatuh</div>
-    <div style="margin-top:20px;font-size:10px;color:#c9a84c;opacity:0.15;letter-spacing:1px;line-height:2">
-        Kel. Mempelai Wanita · Alm. Bapak Fadli &amp; Ibu Sri Sumarti (Wiwik)<br>
-        Kel. Mempelai Pria · Alm. Bapak Paimo &amp; Ibu Suriani
+<div class="inv-footer">
+    <div class="inv-ornament" style="margin-bottom:20px;font-size:11px;letter-spacing:12px">✦ ✦ ✦</div>
+    <div class="inv-footer-names">Intan &amp; Syahrial</div>
+    <div class="inv-footer-sub" style="margin-top:6px">19 Juli 2026 &nbsp;·&nbsp; Namo Bintang</div>
+    <div style="margin-top:20px;font-size:11px;color:#c9a84c;opacity:0.18;font-style:italic">
+        Wassalamu'alaikum Warahmatullahi Wabarakatuh
     </div>
-    <div style="margin-top:24px;font-size:16px;opacity:0.1">🌸 🌸 🌸</div>
+    <div style="margin-top:14px;font-size:10px;color:#c9a84c;opacity:0.12;line-height:2">
+        Kel. Mempelai Wanita — Alm. Bapak Fadli &amp; Ibu Sri Sumarti<br>
+        Kel. Mempelai Pria — Alm. Bapak Paimo &amp; Ibu Suriani
+    </div>
 </div>
 """, unsafe_allow_html=True)
