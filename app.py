@@ -25,9 +25,22 @@ if "wishes" not in st.session_state:
         {"name": "Keluarga Besar", "text": "Semoga menjadi keluarga yang Sakinah, Mawaddah, Warahmah. Aamiin Ya Rabbal Alamin.", "time": "Baru saja"}
     ]
 
-# Check if music file exists
-music_file = os.path.join(os.path.dirname(__file__), "janji-suci.mp3")
-music_exists = os.path.exists(music_file)
+# Check for music file with various possible names
+music_file_names = [
+    "janji-suci.mp3",
+    "Vovie & Nuno - Janji Suci (Video Clip).mp3",
+    "Vovie & Nuno - Janji Suci.mp3",
+    "Janji Suci.mp3"
+]
+
+music_file = None
+for name in music_file_names:
+    test_path = os.path.join(os.path.dirname(__file__), name)
+    if os.path.exists(test_path):
+        music_file = test_path
+        break
+
+music_exists = music_file is not None
 
 # ══════════════════════════════════════════════════════════════
 #  GLOBAL STYLES + ELEGANT SAKURA BACKGROUND
@@ -70,17 +83,17 @@ body, .stMarkdown, p, div {
 }
 .sakura-petal-bg {
     position: absolute;
-    opacity: 0.08;
+    opacity: 0.06;
     font-size: 28px;
     animation: floatPetal 20s infinite ease-in-out;
     color: #ffb6c1;
 }
 @keyframes floatPetal {
-    0% { transform: translate(0, 0) rotate(0deg); opacity: 0.08; }
-    25% { transform: translate(30px, -20px) rotate(90deg); opacity: 0.12; }
-    50% { transform: translate(-20px, -40px) rotate(180deg); opacity: 0.06; }
-    75% { transform: translate(20px, -60px) rotate(270deg); opacity: 0.12; }
-    100% { transform: translate(0, -80px) rotate(360deg); opacity: 0.08; }
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 0.06; }
+    25% { transform: translate(30px, -20px) rotate(90deg); opacity: 0.10; }
+    50% { transform: translate(-20px, -40px) rotate(180deg); opacity: 0.04; }
+    75% { transform: translate(20px, -60px) rotate(270deg); opacity: 0.10; }
+    100% { transform: translate(0, -80px) rotate(360deg); opacity: 0.06; }
 }
 .sakura-petal-bg:nth-child(1) { left: 5%; animation-delay: 0s; animation-duration: 22s; }
 .sakura-petal-bg:nth-child(2) { left: 15%; animation-delay: 3s; animation-duration: 18s; font-size: 20px; }
@@ -410,12 +423,15 @@ hr { border-color:rgba(201,168,76,0.08) !important; }
 <audio id="bg-audio" loop preload="auto">
 """, unsafe_allow_html=True)
 
-# Use local MP3 if exists, otherwise fallback
+# Use local MP3 if exists
 if music_exists:
+    with open(music_file, "rb") as f:
+        audio_data = base64.b64encode(f.read()).decode()
     st.markdown(f"""
-    <source src="data:audio/mpeg;base64,{base64.b64encode(open(music_file, 'rb').read()).decode()}" type="audio/mpeg">
+    <source src="data:audio/mpeg;base64,{audio_data}" type="audio/mpeg">
     """, unsafe_allow_html=True)
 else:
+    # Fallback ke musik online
     st.markdown("""
     <source src="https://ia800905.us.archive.org/19/items/FREE_background_music_dac/07_-_Music_Box.mp3" type="audio/mpeg">
     """, unsafe_allow_html=True)
@@ -517,7 +533,7 @@ st.markdown("""
 })();
 
 // ============================================================
-// COUNTDOWN - FIXED
+// COUNTDOWN - FIXED (berjalan setiap detik)
 // ============================================================
 (function(){
     function pad(n){ return String(n).padStart(2,'0'); }
@@ -543,7 +559,7 @@ st.markdown("""
         }
     }
     
-    // Update immediately and every second
+    // Jalankan langsung dan setiap detik
     updateCountdown();
     setInterval(updateCountdown, 1000);
 })();
