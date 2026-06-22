@@ -27,10 +27,7 @@ if "wishes" not in st.session_state:
 
 # Check for music file with various possible names
 music_file_names = [
-    "janji-suci.mp3",
-    "Vovie & Nuno - Janji Suci (Video Clip).mp3",
-    "Vovie & Nuno - Janji Suci.mp3",
-    "Janji Suci.mp3"
+    "Yovie & Nuno - Janji Suci (Video Clip).mp3",
 ]
 
 music_file = None
