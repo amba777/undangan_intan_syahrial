@@ -1,8 +1,6 @@
 import streamlit as st
 import json
 import os
-from datetime import datetime
-import pytz
 
 st.set_page_config(
     page_title="Undangan Pernikahan Intan & Syahrial",
@@ -526,31 +524,45 @@ def section_label(text):
     st.markdown(f'<div class="s-label">— {text} —</div>', unsafe_allow_html=True)
 
 def countdown_html():
-    tz = pytz.timezone("Asia/Jakarta")
-    now = datetime.now(tz)
-    target = tz.localize(datetime(2026, 7, 19, 10, 0, 0))
-    diff = target - now
-    if diff.total_seconds() <= 0:
-        d = h = m = s = 0
-    else:
-        total = int(diff.total_seconds())
-        d = total // 86400
-        h = (total % 86400) // 3600
-        m = (total % 3600) // 60
-        s = total % 60
-    return f"""
+    return """
     <div class="countdown-wrap">
         <div class="s-label">— Menghitung Hari Menuju Hari Bahagia —</div>
         <div class="cd-grid">
-            <div class="cd-block"><span class="cd-num">{d:02d}</span><div class="cd-unit">Hari</div></div>
+            <div class="cd-block"><span class="cd-num" id="cd-days">00</span><div class="cd-unit">Hari</div></div>
             <div class="cd-sep">:</div>
-            <div class="cd-block"><span class="cd-num">{h:02d}</span><div class="cd-unit">Jam</div></div>
+            <div class="cd-block"><span class="cd-num" id="cd-hours">00</span><div class="cd-unit">Jam</div></div>
             <div class="cd-sep">:</div>
-            <div class="cd-block"><span class="cd-num">{m:02d}</span><div class="cd-unit">Menit</div></div>
+            <div class="cd-block"><span class="cd-num" id="cd-mins">00</span><div class="cd-unit">Menit</div></div>
             <div class="cd-sep">:</div>
-            <div class="cd-block"><span class="cd-num">{s:02d}</span><div class="cd-unit">Detik</div></div>
+            <div class="cd-block"><span class="cd-num" id="cd-secs">00</span><div class="cd-unit">Detik</div></div>
         </div>
-    </div>"""
+    </div>
+    <script>
+    (function() {
+        function pad(n) { return String(n).padStart(2,'0'); }
+        function tick() {
+            var target = new Date('2026-07-19T10:00:00+07:00').getTime();
+            var now = Date.now();
+            var diff = target - now;
+            if (diff < 0) diff = 0;
+            var d = Math.floor(diff / 86400000);
+            var h = Math.floor((diff % 86400000) / 3600000);
+            var m = Math.floor((diff % 3600000) / 60000);
+            var s = Math.floor((diff % 60000) / 1000);
+            var ed = document.getElementById('cd-days');
+            var eh = document.getElementById('cd-hours');
+            var em = document.getElementById('cd-mins');
+            var es = document.getElementById('cd-secs');
+            if (ed) ed.textContent = pad(d);
+            if (eh) eh.textContent = pad(h);
+            if (em) em.textContent = pad(m);
+            if (es) es.textContent = pad(s);
+        }
+        tick();
+        setInterval(tick, 1000);
+    })();
+    </script>
+    """
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -623,7 +635,7 @@ st.markdown("""
 st.markdown("""
 <div class="s-card" style="margin:0 20px 8px">
     <div class="s-label">— Mempelai Wanita —</div>
-    <span class="mempelai-name">Intan Candra Nurul Hafizah</span>
+    <span class="mempelai-name">Intan Candra Nurul Hafiyah</span>
     <div class="mempelai-parents">Putri dari Alm. Bapak Fadli &amp; Ibu Sri Sumarti (Wiwik)</div>
 </div>
 <div style="text-align:center;margin:8px 0">
@@ -680,20 +692,17 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns([1,2,1])
-with col2:
-    if st.button("🗺️  Buka Google Maps", key="maps"):
-        st.markdown("""
-        <script>window.open('https://maps.app.goo.gl/8G9hHHY9LzdGg5yc6','_blank');</script>
-        """, unsafe_allow_html=True)
-        st.markdown("""
-        <div style="text-align:center;margin-top:8px">
-            <a href="https://maps.app.goo.gl/8G9hHHY9LzdGg5yc6" target="_blank"
-               style="color:#c9a84c;font-size:11px;letter-spacing:2px;text-decoration:none;
-               text-transform:uppercase;border-bottom:1px solid rgba(201,168,76,0.4);padding-bottom:2px">
-               Klik di sini untuk buka peta ↗
-            </a>
-        </div>""", unsafe_allow_html=True)
+st.markdown("""
+<div style="text-align:center;margin:0 20px 20px;padding:0 20px">
+    <a href="https://maps.app.goo.gl/8G9hHHY9LzdGg5yc6" target="_blank"
+       style="display:inline-block;padding:14px 36px;border:1px solid #c9a84c;
+              color:#c9a84c;font-family:'Cormorant Garamond',serif;font-size:12px;
+              letter-spacing:4px;text-transform:uppercase;text-decoration:none;
+              background:transparent;transition:all 0.3s">
+        🗺️ &nbsp; Buka Google Maps
+    </a>
+</div>
+""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  KHITANAN
