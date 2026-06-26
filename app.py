@@ -27,7 +27,7 @@ if "wishes" not in st.session_state:
     ]
 
 # Cari file MP3
-music_file = os.path.join(os.path.dirname(__file__), "janji_suci_short.mp3")
+music_file = os.path.join(os.path.dirname(__file__), "cinta_terakhir.mp3")
 music_exists = os.path.exists(music_file)
 
 audio_b64 = ""
