@@ -523,7 +523,7 @@ components.html("""
             playing = true;
             btn.textContent = '♫';
             btn.classList.add('playing');
-            showLabel('♫ Janji Suci — Yovie & Nuno');
+            showLabel('♫ Cinta Terakhir — Ari Lasso');
         }
         function markPaused() {
             playing = false;
