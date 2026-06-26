@@ -231,7 +231,7 @@ body, .stMarkdown, p, div {
         radial-gradient(ellipse 90% 60% at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 60%),
         radial-gradient(ellipse 70% 50% at 50% 100%, rgba(120,60,30,0.14) 0%, transparent 60%),
         linear-gradient(180deg, #0a0705 0%, #100c08 45%, #0a0705 100%);
-    transition: opacity .9s ease, visibility .9s ease;
+    transition: opacity .45s ease, visibility .45s ease;
 }
 #inv-cover.cover-hidden { opacity:0; visibility:hidden; pointer-events:none; }
 .cover-inner { text-align:center; padding:30px; max-width:380px; }
@@ -531,16 +531,31 @@ components.html("""
             btn.classList.remove('playing');
         }
 
-        /* ── OPEN INVITATION: real user gesture -> audio is allowed ── */
-        openBtn.addEventListener('click', function() {
-            audio.muted = false;
-            audio.volume = 0.65;
-            var p = audio.play();
-            if (p && p.then) { p.then(markPlaying).catch(markPaused); }
+        /* ── OPEN INVITATION: real user gesture -> audio is allowed ──
+           PENTING: cover HARUS hilang dulu apapun yang terjadi,
+           baru audio dicoba diputar terpisah (try/catch) supaya
+           kalau musik error, tombol tetap berfungsi membuka
+           undangan. */
+        function openInvitation() {
             cover.classList.add('cover-hidden');
             doc.documentElement.style.overflow = 'auto';
             doc.body.style.overflow = 'auto';
-        });
+            /* tunda proses audio ke tick berikutnya supaya animasi
+               cover sempat mulai render duluan, tidak nunggu decode audio */
+            setTimeout(function() {
+                try {
+                    audio.muted = false;
+                    audio.volume = 0.65;
+                    var p = audio.play();
+                    if (p && p.then) { p.then(markPlaying).catch(markPaused); }
+                    else { markPlaying(); }
+                } catch (err) {
+                    markPaused();
+                }
+            }, 0);
+        }
+        openBtn.addEventListener('click', openInvitation);
+        openBtn.addEventListener('touchend', function(e){ e.preventDefault(); openInvitation(); });
 
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
