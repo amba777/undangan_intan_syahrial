@@ -27,7 +27,7 @@ if "wishes" not in st.session_state:
     ]
 
 # Cari file MP3
-music_file = os.path.join(os.path.dirname(__file__), "janji_suci_short.mp3")
+music_file = os.path.join(os.path.dirname(__file__), "janji_suci.mp3")
 music_exists = os.path.exists(music_file)
 
 audio_b64 = ""
@@ -231,7 +231,8 @@ body, .stMarkdown, p, div {
         radial-gradient(ellipse 90% 60% at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 60%),
         radial-gradient(ellipse 70% 50% at 50% 100%, rgba(120,60,30,0.14) 0%, transparent 60%),
         linear-gradient(180deg, #0a0705 0%, #100c08 45%, #0a0705 100%);
-    transition: opacity .45s ease, visibility .45s ease;
+    transition: opacity .2s ease, visibility .2s ease;
+    will-change: opacity;
 }
 #inv-cover.cover-hidden { opacity:0; visibility:hidden; pointer-events:none; }
 .cover-inner { text-align:center; padding:30px; max-width:380px; }
@@ -500,9 +501,8 @@ components.html("""
     if (window.parent.__invInit) { return; }
     window.parent.__invInit = true;
 
-    /* ── LOCK SCROLL while cover is showing ── */
-    doc.documentElement.style.overflow = 'hidden';
-    doc.body.style.overflow = 'hidden';
+    /* Cover bersifat fixed full-screen, jadi tidak perlu mengunci
+       overflow body — menghindari reflow halaman penuh saat dibuka */
 
     function setupAll() {
         var audio = doc.getElementById('bg-audio');
@@ -538,8 +538,6 @@ components.html("""
            undangan. */
         function openInvitation() {
             cover.classList.add('cover-hidden');
-            doc.documentElement.style.overflow = 'auto';
-            doc.body.style.overflow = 'auto';
             /* tunda proses audio ke tick berikutnya supaya animasi
                cover sempat mulai render duluan, tidak nunggu decode audio */
             setTimeout(function() {
