@@ -223,6 +223,48 @@ body, .stMarkdown, p, div {
 .inv-footer-sub { font-size:9.5px; letter-spacing:4px; color:#c9a84c; opacity:0.35; text-transform:uppercase; }
 .inv-wassalam { font-size:11.5px; color:#c9a84c; opacity:0.3; font-style:italic; margin-top:18px; }
 
+/* ── COVER / OPENING SCREEN ── */
+#inv-cover {
+    position:fixed; inset:0; z-index:99999;
+    display:flex; align-items:center; justify-content:center;
+    background:
+        radial-gradient(ellipse 90% 60% at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 50% at 50% 100%, rgba(120,60,30,0.14) 0%, transparent 60%),
+        linear-gradient(180deg, #0a0705 0%, #100c08 45%, #0a0705 100%);
+    transition: opacity .9s ease, visibility .9s ease;
+}
+#inv-cover.cover-hidden { opacity:0; visibility:hidden; pointer-events:none; }
+.cover-inner { text-align:center; padding:30px; max-width:380px; }
+.cover-frame {
+    border:1px solid rgba(201,168,76,0.35); padding:46px 30px; position:relative;
+    background: linear-gradient(180deg, rgba(201,168,76,0.04), rgba(201,168,76,0.01));
+    box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+}
+.cover-frame::before, .cover-frame::after { content:''; position:absolute; width:22px; height:22px; border-color: rgba(201,168,76,0.65); border-style:solid; }
+.cover-frame::before { top:-1px; left:-1px; border-width:2px 0 0 2px; }
+.cover-frame::after  { bottom:-1px; right:-1px; border-width:0 2px 2px 0; }
+.cover-kicker { font-size:10px; letter-spacing:5px; text-transform:uppercase; color:#c9a84c; opacity:0.6; margin-bottom:22px; }
+.cover-names {
+    font-family:'Playfair Display', serif !important; font-size:42px !important; font-weight:700 !important;
+    background: linear-gradient(95deg, #9c7a35 0%, #f6e3a3 30%, #c9a84c 55%, #f6e3a3 75%, #9c7a35 100%);
+    background-size: 250% auto; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    animation: shimmer 7s linear infinite; line-height:1.15;
+}
+.cover-amp { display:block; font-family:'Tangerine', cursive !important; font-size:30px !important; color:rgba(201,168,76,0.55) !important; margin:4px 0; }
+.cover-date { font-size:11px; letter-spacing:3px; color:#c9a84c; opacity:0.5; text-transform:uppercase; margin:18px 0 30px; }
+.cover-divider { width:60px; height:1px; background:rgba(201,168,76,0.4); margin:0 auto 28px; }
+#cover-open-btn {
+    display:inline-flex; align-items:center; gap:10px; padding:14px 36px; border:1px solid rgba(201,168,76,0.55);
+    color:#e3c873; font-family:'Cormorant Garamond', serif; font-size:12px; letter-spacing:4px; text-transform:uppercase;
+    background: rgba(201,168,76,0.06); cursor:pointer; transition: all .35s;
+}
+#cover-open-btn:hover { background: rgba(201,168,76,0.16); border-color:#e3c873; box-shadow:0 0 30px rgba(201,168,76,0.25); }
+#cover-open-btn .env-ico { animation: float 2.4s ease-in-out infinite; font-size:14px; }
+
+/* ── SCROLL REVEAL ── */
+.reveal { opacity:0; transform: translateY(22px); transition: opacity .8s ease, transform .8s ease; }
+.reveal.visible { opacity:1; transform: translateY(0); }
+
 /* ── MUSIC BTN (rendered by component, positioned via fixed CSS) ── */
 #music-btn {
     position:fixed; bottom:28px; right:28px; width:50px; height:50px; border-radius:50%;
@@ -281,6 +323,20 @@ hr { border-color: rgba(201,168,76,0.1) !important; }
 <div id="texture-overlay"></div>
 <div id="vignette"></div>
 <div class="gold-frame-edge"></div>
+
+<div id="inv-cover">
+    <div class="cover-inner">
+        <div class="cover-frame">
+            <div class="cover-kicker">✦ The Wedding Of ✦</div>
+            <div class="cover-names">Intan</div>
+            <div class="cover-amp">&amp;</div>
+            <div class="cover-names">Syahrial</div>
+            <div class="cover-date">19 Juli 2026 &nbsp;·&nbsp; Namo Bintang</div>
+            <div class="cover-divider"></div>
+            <button id="cover-open-btn"><span class="env-ico">✉</span> Buka Undangan</button>
+        </div>
+    </div>
+</div>
 """, unsafe_allow_html=True)
 
 # ── Audio element (lives in MAIN document so the component below can find it) ──
@@ -410,15 +466,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-#  FIX MUSIK: sebelumnya nunggu setTimeout 500ms lalu kalau gagal
-#  baru nunggu klik/scroll — makanya musik kerasa "telat" atau
-#  baru bunyi setelah pengguna ngapa-ngapain.
-#  Sekarang: begitu script ini jalan, langsung coba play SAAT INI
-#  JUGA dengan trik "muted-autoplay" (mainkan dalam keadaan mute,
-#  lalu langsung unmute) — ini cara yang dipercaya browser modern
-#  (Chrome/Safari/Firefox) jadi bisa lolos walau tanpa klik user.
-#  Kalau tetap diblokir browser, langsung fallback ke interaksi
-#  pertama (klik/scroll/sentuh) tanpa delay tambahan.
+#  FIX MUSIK (final): Browser modern TIDAK akan mengizinkan audio
+#  berbunyi otomatis tanpa interaksi user — trik mute/unmute pun
+#  akan diblokir lagi. Solusi yang benar2 reliable: layar
+#  "Buka Undangan" di atas. Begitu tombol itu ditekan, itu adalah
+#  gesture asli dari user → browser pasti mengizinkan audio.play()
+#  dijalankan tepat di event click tersebut. Jadi musik dan
+#  tampilan undangan terbuka BERSAMAAN, tanpa delay.
+#
+#  Tambahan: animasi scroll-reveal supaya tiap bagian undangan
+#  muncul dengan fade-up halus saat di-scroll (efek lebih mewah).
 # ══════════════════════════════════════════════════════════════
 components.html("""
 <script>
@@ -440,15 +497,20 @@ components.html("""
     setInterval(tickCountdown, 1000);
     tickCountdown();
 
-    /* ── MUSIC ── */
-    if (window.parent.__invMusicInit) { return; }
-    window.parent.__invMusicInit = true;
+    if (window.parent.__invInit) { return; }
+    window.parent.__invInit = true;
 
-    function setupMusic() {
+    /* ── LOCK SCROLL while cover is showing ── */
+    doc.documentElement.style.overflow = 'hidden';
+    doc.body.style.overflow = 'hidden';
+
+    function setupAll() {
         var audio = doc.getElementById('bg-audio');
         var btn   = doc.getElementById('music-btn');
         var label = doc.getElementById('music-label');
-        if (!audio || !btn || !label) { setTimeout(setupMusic, 100); return; }
+        var cover = doc.getElementById('inv-cover');
+        var openBtn = doc.getElementById('cover-open-btn');
+        if (!audio || !btn || !label || !cover || !openBtn) { setTimeout(setupAll, 100); return; }
 
         var playing = false, labelTO = null;
         function showLabel(txt) {
@@ -457,70 +519,62 @@ components.html("""
             clearTimeout(labelTO);
             labelTO = setTimeout(function(){ label.classList.remove('show'); }, 3000);
         }
-
         function markPlaying() {
             playing = true;
             btn.textContent = '♫';
             btn.classList.add('playing');
             showLabel('♫ Janji Suci — Yovie & Nuno');
         }
-        function markBlocked() {
+        function markPaused() {
+            playing = false;
             btn.textContent = '♪';
             btn.classList.remove('playing');
         }
 
-        /* Coba play langsung, kalau diblokir browser coba trik
-           "mute lalu unmute" yang lebih jarang diblokir. */
-        function tryAutoplay() {
-            audio.volume = 0.65;
+        /* ── OPEN INVITATION: real user gesture -> audio is allowed ── */
+        openBtn.addEventListener('click', function() {
             audio.muted = false;
+            audio.volume = 0.65;
             var p = audio.play();
-            if (p && p.then) {
-                p.then(markPlaying).catch(function() {
-                    audio.muted = true;
-                    var p2 = audio.play();
-                    if (p2 && p2.then) {
-                        p2.then(function() {
-                            audio.muted = false;
-                            markPlaying();
-                        }).catch(markBlocked);
-                    } else {
-                        audio.muted = false;
-                    }
-                });
-            }
-        }
-
-        function onFirstInteract() {
-            if (!playing) {
-                audio.muted = false;
-                audio.volume = 0.65;
-                audio.play().then(markPlaying).catch(function(){});
-            }
-            doc.removeEventListener('click', onFirstInteract);
-            doc.removeEventListener('scroll', onFirstInteract);
-            doc.removeEventListener('touchstart', onFirstInteract);
-        }
-        doc.addEventListener('click', onFirstInteract, { once:true });
-        doc.addEventListener('scroll', onFirstInteract, { once:true });
-        doc.addEventListener('touchstart', onFirstInteract, { once:true });
-
-        /* Jalankan SEKARANG, tidak ditunda lagi */
-        tryAutoplay();
+            if (p && p.then) { p.then(markPlaying).catch(markPaused); }
+            cover.classList.add('cover-hidden');
+            doc.documentElement.style.overflow = 'auto';
+            doc.body.style.overflow = 'auto';
+        });
 
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (playing) {
                 audio.pause();
-                playing = false;
-                markBlocked();
+                markPaused();
                 showLabel('⏸ Musik dijeda');
             } else {
-                tryAutoplay();
+                audio.play().then(markPlaying).catch(function(){});
             }
         });
+
+        /* ── SCROLL REVEAL ── */
+        var revealSelectors = '.inv-card, .inv-events, .inv-countdown, .inv-footer, .wish-item, .inv-couple-wrap, .inv-hero, .inv-frame-wrap, .inv-gallery';
+        var revealEls = doc.querySelectorAll(revealSelectors);
+        revealEls.forEach(function(el){ el.classList.add('reveal'); });
+
+        var observer = new (window.parent.IntersectionObserver)(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        revealEls.forEach(function(el){ observer.observe(el); });
+
+        /* Elemen yang sudah terlihat duluan (hero) langsung ditandai visible */
+        setTimeout(function(){
+            var hero = doc.querySelector('.inv-hero');
+            if (hero) hero.classList.add('visible');
+        }, 50);
     }
-    setupMusic();
+    setupAll();
 })();
 </script>
 """, height=0)
