@@ -37,9 +37,14 @@ if music_exists:
 
 # ══════════════════════════════════════════════════════════════
 #  STYLE — LUXURY GOLD & MIDNIGHT THEME
+#  (FIX KECEPATAN: preconnect ke font, hanya load weight yang
+#   benar2 dipakai, font-display:swap supaya teks tidak
+#   "menunggu" font sebelum tampil)
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=Tangerine:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@600;700;800&family=Tangerine:wght@700&display=swap&font-display=swap" rel="stylesheet">
 
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -305,16 +310,16 @@ if photos.get("foto1"):
             <div class="inv-frame-corner ifc-tr"></div>
             <div class="inv-frame-corner ifc-bl"></div>
             <div class="inv-frame-corner ifc-br"></div>
-            <img src="data:image/png;base64,{photos['foto1']}" alt="Foto Mempelai"/>
+            <img src="data:image/png;base64,{photos['foto1']}" alt="Foto Mempelai" loading="eager"/>
         </div>
     </div>""", unsafe_allow_html=True)
 
 if photos.get("foto2") and photos.get("foto3"):
     st.markdown(f"""
     <div class="inv-gallery">
-        <img src="data:image/png;base64,{photos['foto1']}" alt=""/>
-        <img src="data:image/png;base64,{photos['foto2']}" alt=""/>
-        <img src="data:image/png;base64,{photos['foto3']}" alt=""/>
+        <img src="data:image/png;base64,{photos['foto1']}" alt="" loading="lazy"/>
+        <img src="data:image/png;base64,{photos['foto2']}" alt="" loading="lazy"/>
+        <img src="data:image/png;base64,{photos['foto3']}" alt="" loading="lazy"/>
     </div>""", unsafe_allow_html=True)
 
 st.markdown("""
@@ -405,14 +410,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-#  IMPORTANT FIX:
-#  st.markdown() injects HTML via innerHTML, and browsers never
-#  execute <script> tags inserted that way. That's why the
-#  countdown was frozen and the music never started.
-#  components.html() renders in a REAL iframe, so its <script>
-#  actually runs — and from inside it we reach into the parent
-#  page (window.parent.document) to update the countdown spans,
-#  drive the <audio> element, and wire up the music button.
+#  FIX MUSIK: sebelumnya nunggu setTimeout 500ms lalu kalau gagal
+#  baru nunggu klik/scroll — makanya musik kerasa "telat" atau
+#  baru bunyi setelah pengguna ngapa-ngapain.
+#  Sekarang: begitu script ini jalan, langsung coba play SAAT INI
+#  JUGA dengan trik "muted-autoplay" (mainkan dalam keadaan mute,
+#  lalu langsung unmute) — ini cara yang dipercaya browser modern
+#  (Chrome/Safari/Firefox) jadi bisa lolos walau tanpa klik user.
+#  Kalau tetap diblokir browser, langsung fallback ke interaksi
+#  pertama (klik/scroll/sentuh) tanpa delay tambahan.
 # ══════════════════════════════════════════════════════════════
 components.html("""
 <script>
@@ -442,7 +448,7 @@ components.html("""
         var audio = doc.getElementById('bg-audio');
         var btn   = doc.getElementById('music-btn');
         var label = doc.getElementById('music-label');
-        if (!audio || !btn || !label) { setTimeout(setupMusic, 300); return; }
+        if (!audio || !btn || !label) { setTimeout(setupMusic, 100); return; }
 
         var playing = false, labelTO = null;
         function showLabel(txt) {
@@ -451,24 +457,46 @@ components.html("""
             clearTimeout(labelTO);
             labelTO = setTimeout(function(){ label.classList.remove('show'); }, 3000);
         }
-        function doPlay() {
+
+        function markPlaying() {
+            playing = true;
+            btn.textContent = '♫';
+            btn.classList.add('playing');
+            showLabel('♫ Janji Suci — Yovie & Nuno');
+        }
+        function markBlocked() {
+            btn.textContent = '♪';
+            btn.classList.remove('playing');
+        }
+
+        /* Coba play langsung, kalau diblokir browser coba trik
+           "mute lalu unmute" yang lebih jarang diblokir. */
+        function tryAutoplay() {
             audio.volume = 0.65;
+            audio.muted = false;
             var p = audio.play();
-            if (p) {
-                p.then(function() {
-                    playing = true;
-                    btn.textContent = '♫';
-                    btn.classList.add('playing');
-                    showLabel('♫ Janji Suci — Yovie & Nuno');
-                }).catch(function() {
-                    btn.textContent = '♪';
-                    btn.classList.remove('playing');
-                    showLabel('Klik ♪ untuk memutar musik');
+            if (p && p.then) {
+                p.then(markPlaying).catch(function() {
+                    audio.muted = true;
+                    var p2 = audio.play();
+                    if (p2 && p2.then) {
+                        p2.then(function() {
+                            audio.muted = false;
+                            markPlaying();
+                        }).catch(markBlocked);
+                    } else {
+                        audio.muted = false;
+                    }
                 });
             }
         }
+
         function onFirstInteract() {
-            if (!playing) doPlay();
+            if (!playing) {
+                audio.muted = false;
+                audio.volume = 0.65;
+                audio.play().then(markPlaying).catch(function(){});
+            }
             doc.removeEventListener('click', onFirstInteract);
             doc.removeEventListener('scroll', onFirstInteract);
             doc.removeEventListener('touchstart', onFirstInteract);
@@ -477,18 +505,18 @@ components.html("""
         doc.addEventListener('scroll', onFirstInteract, { once:true });
         doc.addEventListener('touchstart', onFirstInteract, { once:true });
 
-        setTimeout(doPlay, 500);
+        /* Jalankan SEKARANG, tidak ditunda lagi */
+        tryAutoplay();
 
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (playing) {
                 audio.pause();
                 playing = false;
-                btn.textContent = '♪';
-                btn.classList.remove('playing');
+                markBlocked();
                 showLabel('⏸ Musik dijeda');
             } else {
-                doPlay();
+                tryAutoplay();
             }
         });
     }
